@@ -14,7 +14,7 @@ class AppointmentManager:
 
 
 
-################################## version chat gpt con crifrado RSA ######################
+################################## version con crifrado RSA ######################
 
 usuarios = {
     "usuario1": {
