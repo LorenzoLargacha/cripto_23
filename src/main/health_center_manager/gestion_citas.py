@@ -1,10 +1,11 @@
-"""AppointmentManager"""
+"""GestionCitas"""
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives import hashes
 import hashlib
 
-class AppointmentManager:
+
+class GestionCitas:
     """ Class for providing the methods for managing an appointment request """
 
     def __init__(self):
