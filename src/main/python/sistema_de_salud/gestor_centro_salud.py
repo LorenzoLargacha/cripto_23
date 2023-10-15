@@ -1,22 +1,70 @@
 """GestionCitas"""
+import os
+import json
+import hashlib
+
+from sistema_de_salud.storage.paciente_json_store import PacienteJsonStore
+from sistema_de_salud.storage.medico_json_store import MedicoJsonStore
+
+from sistema_de_salud.registro_paciente import RegistroPaciente
+from sistema_de_salud.registro_medico import RegistroMedico
+from sistema_de_salud.cfg.gestor_centro_salud_config import JSON_FILES_PATH
+
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives import hashes
-import hashlib
 
 
-class GestionCitas:
-    """ Class for providing the methods for managing an appointment request """
+class GestorCentroSalud:
+    """Clase que proporciona los métodos para gestionar una cita médica"""
 
     def __init__(self):
         pass
 
+    def registro_paciente(self, id_paciente: str, nombre_completo: str, telefono: str, edad: str, password: str) -> str:
+        """Registra a un paciente"""
+        paciente = RegistroPaciente(id_paciente, nombre_completo, telefono, edad)
+        store_pacientes = PacienteJsonStore()
+        store_pacientes.guardar_paciente_store(paciente)
+
+        #store_autenticacion = AutenticacionJsonStore()
+
+        return paciente.id_paciente
+
+    def registro_medico(self, id_medico: str, nombre_completo: str, telefono: str, edad: str, especialidad: str) -> str:
+        """Registra a un paciente"""
+        medico = RegistroMedico(id_medico, nombre_completo, telefono, edad, especialidad)
+        store_medicos = MedicoJsonStore()
+        store_medicos.guardar_medico_store(medico)
+
+        return medico.id_medico
+
+    def main(self):
+        """Función Principal"""
+        # Preparación del programa, borrar stores
+        store_pacientes = JSON_FILES_PATH + "store_pacientes.json"
+        if os.path.isfile(store_pacientes):
+            os.remove(store_pacientes)
+        store_medicos = JSON_FILES_PATH + "store_medicos.json"
+        if os.path.isfile(store_medicos):
+            os.remove(store_medicos)
+
+        print("Bienvenido al sistema de citas.")
+        # Registrar paciente
+        id_paciente = self.registro_paciente("54126179V", "Lorenzo Largacha Sanz", "+34111555888", "22", "12345ABC")
+        print(id_paciente)
+        # Registrar médico
+        id_medico = self.registro_medico("62108856Y", "Manuel Fernandez Gil", "+34222444777", "53", "Medicina General")
+        print(id_medico)
 
 
+if __name__ == "__main__":
+    gestor_centro_salud = GestorCentroSalud()
+    gestor_centro_salud.main()
 
 
 ################################## version con crifrado RSA ######################
-
+"""
 usuarios = {
     "usuario1": {
         "clave_privada": None,
@@ -207,4 +255,4 @@ def consultar_citas():
 
 if __name__ == "__main__":
     main()
-
+"""

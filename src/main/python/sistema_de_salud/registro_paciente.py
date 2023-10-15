@@ -11,7 +11,7 @@ class RegistroPaciente:
         # Creamos los atributos
         self.__id_paciente = id_paciente
         self.__nombre_completo = nombre_completo
-        self.__numero_telefono = telefono
+        self.__telefono = telefono
         self.__edad = edad
         justnow = datetime.utcnow()
         self.__time_stamp = datetime.timestamp(justnow)
@@ -19,15 +19,15 @@ class RegistroPaciente:
         # evitamos que cambie la hora (borrar despues, solo sirve para los tests)
         # self.__time_stamp = 1646300783.846215
 
-        # añadimos el atributo usuario_sys_id para que se guarde en store_paciente
-        self.__usuario_sys_id = self.user_system_id
+        # añadimos el atributo usuario_sys_id para que se guarde en store_pacientes
+        #self.__usuario_sys_id = self.user_system_id
 
     def __str__(self):
         return "RegistroPaciente:" + json.dumps(self.__dict__)
 
     @property
     def id_paciente(self):
-        """Property que representa el ID del usuario que se registra (registrado)"""
+        """Property que representa el DNI del usuario que se registra (registrado)"""
         return self.__id_paciente
 
     @id_paciente.setter
@@ -44,13 +44,13 @@ class RegistroPaciente:
         self.__nombre_completo = value
 
     @property
-    def numero_telefono(self):
+    def telefono(self):
         """Property que representa el número de teléfono del registrado"""
-        return self.__numero_telefono
+        return self.__telefono
 
-    @numero_telefono.setter
-    def numero_telefono(self, value):
-        self.__numero_telefono = value
+    @telefono.setter
+    def telefono(self, value):
+        self.__telefono = value
 
     @property
     def edad(self):
@@ -62,12 +62,12 @@ class RegistroPaciente:
         """Read-only property que devuelve el timestamp del registro"""
         return self.__time_stamp
 
-    @property
-    def user_system_id(self):
-        """Returns the md5 signature"""
-        return hashlib.md5(self.__str__().encode()).hexdigest()
+    #@property
+    #def user_system_id(self):
+    #    """Returns the md5 signature"""
+    #    return hashlib.md5(self.__str__().encode()).hexdigest()
 
-    @property
-    def usuario_sys_id(self):
-        """Read-only property que devuelve el usuario_sys_id"""
-        return self.__usuario_sys_id
+    #@property
+    #def usuario_sys_id(self):
+    #    """Read-only property que devuelve el usuario_sys_id"""
+    #    return self.__usuario_sys_id

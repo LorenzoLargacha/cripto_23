@@ -1,4 +1,0 @@
-"""SECURE ALL MODULE WITH ALL THE FEATURES REQUIRED FOR ACCESS CONTROL"""
-
-from .gestion_citas import GestionCitas
-
