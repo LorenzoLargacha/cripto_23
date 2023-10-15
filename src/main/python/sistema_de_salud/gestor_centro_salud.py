@@ -11,9 +11,11 @@ from sistema_de_salud.registro_paciente import RegistroPaciente
 from sistema_de_salud.registro_medico import RegistroMedico
 from sistema_de_salud.cfg.gestor_centro_salud_config import JSON_FILES_PATH
 
-from cryptography.hazmat.primitives.asymmetric import rsa, padding
-from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
+#from cryptography.hazmat.primitives.asymmetric import rsa, padding
+#from cryptography.hazmat.primitives import serialization
 
 
 class GestorCentroSalud:
@@ -29,10 +31,20 @@ class GestorCentroSalud:
         registro = store_pacientes.guardar_paciente_store(paciente)
         # Solo si el paciente es registrado correctamente (y no estaba registrado antes)
         if registro is True:
-            # guardo su autenticación
+            # Derivamos una password segura mediante una KDF (Key Derivation Function)
+            salt = os.urandom(16)   # generamos un salt aleatorio, los valores seguros tienen 16 bytes (128 bits) o más
+            # Algoritmo de coste variable PBKDF2 (Password Based Key Derivation Function 2)
+            # algoritmo: SHA256 ... ; longitud max: 2^32 - 1 ; iteraciones: más iteraciones puede mitigar brute force attacks
+            kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=480000)
+            # Derivamos la clave criptográfica
+            key = kdf.derive(password.encode('utf-8'))      # encode('utf-8') para convertir de string a bytes
+            salt_hex = salt.hex()
+            key_hex = key.hex()
+            # Guardamos la información de autenticación
             usuario = {
                 "_AutenticacionUsuario__id_usuario": id_paciente,
-                "_AutenticacionUsuario__password": password
+                "_AutenticacionUsuario__salt": salt_hex,
+                "_AutenticacionUsuario__password": key_hex
             }
             store_autenticaciones = AutenticacionJsonStore()
             store_autenticaciones.guardar_password_store(usuario)
