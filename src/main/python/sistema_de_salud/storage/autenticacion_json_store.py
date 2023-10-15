@@ -12,7 +12,8 @@ class AutenticacionJsonStore(JsonStore):
         """Clase privada, patron singleton"""
         _FILE_PATH = JSON_FILES_PATH + "store_autenticaciones.json"
         _ID_FIELD = "_AutenticacionUsuario__id_usuario"
-        _PASSWORD_FIELD = "_AutenticacionUsuario__password"
+        KEY_LABEL_USER_SALT = "_AutenticacionUsuario__salt"
+        KEY_LABEL_USER_KEY = "_AutenticacionUsuario__key"
 
         __ERROR_MESSAGE_ID_REGISTRADO = "Autenticación de usuario ya registrada"
         __ERROR_MESSAGE_ID_NO_ENCONTRADO = "Autenticación de usuario no encontrada"
@@ -23,7 +24,7 @@ class AutenticacionJsonStore(JsonStore):
             data_list.append(usuario)
             self.save_store(data_list)
 
-        def guardar_password_store(self, usuario) -> True:
+        def guardar_autenticacion_store(self, usuario) -> True:
             """Guarda la autenticación de un usuario en un fichero Json"""
             found = False
             # Buscamos el id_usuario
@@ -34,17 +35,17 @@ class AutenticacionJsonStore(JsonStore):
             if found is False:
                 self.add_item(usuario)
             if found is True:
-                raise ExcepcionesGestor(self.__ERROR_MESSAGE_ID_REGISTRADO)
+                raise ExcepcionesGestor(self.__ERROR_MESSAGE_ID_REGISTRADO)     # se detiene la ejecución
 
             return True
 
-        def buscar_password_store(self, id_usuario: str):
-            """Busca una password en store_autenticaciones"""
+        def buscar_autenticacion_store(self, id_usuario: str):
+            """Busca la información de autenticación de un paciente en store_autenticaciones"""
             item_found = self.find_item(id_usuario)
             try:
                 if item_found is None:
                     raise ExcepcionesGestor(self.__ERROR_MESSAGE_ID_NO_ENCONTRADO)
-                return item_found[self._PASSWORD_FIELD]
+                return item_found
 
             except ExcepcionesGestor as e:
                 print("ERROR:", e)

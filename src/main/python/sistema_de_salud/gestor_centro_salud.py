@@ -20,7 +20,10 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 class GestorCentroSalud:
     """Clase que proporciona los métodos para gestionar un Centro de Salud"""
-
+    KEY_LABEL_PACIENTE_ID = "_RegistroPaciente__id_paciente"
+    KEY_LABEL_USER_ID =   "_AutenticacionUsuario__id_usuario"
+    KEY_LABEL_USER_SALT = "_AutenticacionUsuario__salt"
+    KEY_LABEL_USER_KEY =  "_AutenticacionUsuario__key"
     def __init__(self):
         pass
 
@@ -38,18 +41,47 @@ class GestorCentroSalud:
             kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=480000)
             # Derivamos la clave criptográfica
             key = kdf.derive(password.encode('utf-8'))      # encode('utf-8') para convertir de string a bytes
+            # Convertimos salt y derived key en strings hexadecimales para almacenarlas
             salt_hex = salt.hex()
             key_hex = key.hex()
             # Guardamos la información de autenticación
             usuario = {
-                "_AutenticacionUsuario__id_usuario": id_paciente,
-                "_AutenticacionUsuario__salt": salt_hex,
-                "_AutenticacionUsuario__password": key_hex
+                self.KEY_LABEL_USER_ID: id_paciente,
+                self.KEY_LABEL_USER_SALT: salt_hex,
+                self.KEY_LABEL_USER_KEY: key_hex
             }
             store_autenticaciones = AutenticacionJsonStore()
-            store_autenticaciones.guardar_password_store(usuario)
+            store_autenticaciones.guardar_autenticacion_store(usuario)
 
         return paciente.id_paciente
+
+    def autenticacion_paciente(self, id_paciente: str, password: str) -> bool:
+        """Autentica a un paciente"""
+        # Comprobamos que el paciente esté registrado
+        store_pacientes = PacienteJsonStore()
+        paciente = store_pacientes.buscar_paciente_store(id_paciente)
+        if paciente is None:
+            return False
+        # Obtenemos el salt y la key del paciente almacenados
+        store_autenticaciones = AutenticacionJsonStore()
+        item = store_autenticaciones.buscar_autenticacion_store(paciente[self.KEY_LABEL_PACIENTE_ID])
+        stored_salt_hex = item[self.KEY_LABEL_USER_SALT]
+        stored_key_hex = item[self.KEY_LABEL_USER_KEY]
+        # Convertimos el salt a bytes
+        stored_salt = bytes.fromhex(stored_salt_hex)
+        print("Stored salt:", stored_salt_hex)
+        print("Stored key   :", stored_key_hex)
+        # Derivamos la clave a partir del password introducido por el usuario
+        kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=stored_salt, iterations=480000)
+        key = kdf.derive(password.encode('utf-8'))
+        # Convertimos la key a hexadecimal y comparamos con la key almacenada
+        key_hex = key.hex()
+        print("Generated key:", key_hex)
+        if key_hex != stored_key_hex:
+            print("ERROR: Contraseña incorrecta")
+            return False
+        print("Autenticación exitosa")
+        return True
 
     def registro_medico(self, id_medico: str, nombre_completo: str, telefono: str, edad: str, especialidad: str) -> str:
         """Registra a un paciente"""
@@ -72,7 +104,7 @@ class GestorCentroSalud:
         if os.path.isfile(store):
             os.remove(store)
 
-        print("Bienvenido al sistema de citas.")
+        print("Bienvenido al sistema de gestión del Centro de Salud.")
         # PRUEBAS
         # Registrar paciente
         id_paciente = self.registro_paciente("54126179V", "Lorenzo Largacha Sanz", "+34111555888", "22", "12345ABC")
@@ -82,8 +114,8 @@ class GestorCentroSalud:
         print(id_medico)
         # Buscar password de un paciente
         store_autenticaciones = AutenticacionJsonStore()
-        password = store_autenticaciones.buscar_password_store(id_paciente)
-        print(password)
+        item = store_autenticaciones.buscar_autenticacion_store(id_paciente)
+        print(item[self.KEY_LABEL_USER_KEY])
         # Intento volver a registrar al mismo paciente
         id_paciente = self.registro_paciente("54126179V", "Lorenzo Largacha Sanz", "+34111555888", "22", "12345ABC")
         print(id_paciente)
@@ -91,6 +123,10 @@ class GestorCentroSalud:
         store_pacientes = PacienteJsonStore()
         paciente_buscado = store_pacientes.buscar_paciente_store("54126179K")
         print(paciente_buscado)
+        # Autenticar los datos de un paciente
+        self.autenticacion_paciente("54126179V", "12345ABC")
+        # Intento autenticar los datos de un paciente con una contraseña incorrecta
+        self.autenticacion_paciente("54126179V", "12345CCC")
 
 
 if __name__ == "__main__":
