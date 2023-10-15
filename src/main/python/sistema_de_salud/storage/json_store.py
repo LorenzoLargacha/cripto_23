@@ -17,7 +17,7 @@ class JsonStore:
         pass
 
     def save_store(self, data_list: list) -> None:
-        """Guarda un data list en un json file"""
+        """Guarda una lista en un fichero Json"""
         try:
             with open(self._FILE_PATH, "w", encoding="utf-8", newline="") as file:
                 json.dump(data_list, file, indent=2)
@@ -25,7 +25,7 @@ class JsonStore:
             raise ExcepcionesGestor(self.__ERROR_MESSAGE_FILE_NOT_FOUND) from exception
 
     def load_store(self) -> list:
-        """Carga el contenido de un fichero json en una lista"""
+        """Carga el contenido de un fichero Json en una lista"""
         try:
             with open(self._FILE_PATH, "r", encoding="utf-8", newline="") as file:
                 data_list = json.load(file)
@@ -37,7 +37,7 @@ class JsonStore:
         return data_list
 
     def find_item(self, item_to_find: str) -> any:
-        """Busca el valor de un item key en un fichero json"""
+        """Busca el valor de un item key en un fichero Json"""
         data_list = self.load_store()
         for item in data_list:
             if item[self._ID_FIELD] == item_to_find:
@@ -45,7 +45,7 @@ class JsonStore:
         return None
 
     def add_item(self, item: object) -> None:
-        """Añade un item a un fichero json"""
+        """Añade un item a un fichero Json"""
         data_list = self.load_store()
         data_list.append(item.__dict__)
         self.save_store(data_list)

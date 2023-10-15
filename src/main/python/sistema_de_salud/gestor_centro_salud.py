@@ -5,6 +5,7 @@ import hashlib
 
 from sistema_de_salud.storage.paciente_json_store import PacienteJsonStore
 from sistema_de_salud.storage.medico_json_store import MedicoJsonStore
+from sistema_de_salud.storage.autenticacion_json_store import AutenticacionJsonStore
 
 from sistema_de_salud.registro_paciente import RegistroPaciente
 from sistema_de_salud.registro_medico import RegistroMedico
@@ -16,7 +17,7 @@ from cryptography.hazmat.primitives import hashes
 
 
 class GestorCentroSalud:
-    """Clase que proporciona los métodos para gestionar una cita médica"""
+    """Clase que proporciona los métodos para gestionar un Centro de Salud"""
 
     def __init__(self):
         pass
@@ -25,9 +26,16 @@ class GestorCentroSalud:
         """Registra a un paciente"""
         paciente = RegistroPaciente(id_paciente, nombre_completo, telefono, edad)
         store_pacientes = PacienteJsonStore()
-        store_pacientes.guardar_paciente_store(paciente)
-
-        #store_autenticacion = AutenticacionJsonStore()
+        registro = store_pacientes.guardar_paciente_store(paciente)
+        # Solo si el paciente es registrado correctamente (y no estaba registrado antes)
+        if registro is True:
+            # guardo su autenticación
+            usuario = {
+                "_AutenticacionUsuario__id_usuario": id_paciente,
+                "_AutenticacionUsuario__password": password
+            }
+            store_autenticaciones = AutenticacionJsonStore()
+            store_autenticaciones.guardar_password_store(usuario)
 
         return paciente.id_paciente
 
@@ -42,20 +50,35 @@ class GestorCentroSalud:
     def main(self):
         """Función Principal"""
         # Preparación del programa, borrar stores
-        store_pacientes = JSON_FILES_PATH + "store_pacientes.json"
-        if os.path.isfile(store_pacientes):
-            os.remove(store_pacientes)
-        store_medicos = JSON_FILES_PATH + "store_medicos.json"
-        if os.path.isfile(store_medicos):
-            os.remove(store_medicos)
+        store = JSON_FILES_PATH + "store_pacientes.json"
+        if os.path.isfile(store):
+            os.remove(store)
+        store = JSON_FILES_PATH + "store_medicos.json"
+        if os.path.isfile(store):
+            os.remove(store)
+        store = JSON_FILES_PATH + "store_autenticaciones.json"
+        if os.path.isfile(store):
+            os.remove(store)
 
         print("Bienvenido al sistema de citas.")
+        # PRUEBAS
         # Registrar paciente
         id_paciente = self.registro_paciente("54126179V", "Lorenzo Largacha Sanz", "+34111555888", "22", "12345ABC")
         print(id_paciente)
         # Registrar médico
         id_medico = self.registro_medico("62108856Y", "Manuel Fernandez Gil", "+34222444777", "53", "Medicina General")
         print(id_medico)
+        # Buscar password de un paciente
+        store_autenticaciones = AutenticacionJsonStore()
+        password = store_autenticaciones.buscar_password_store(id_paciente)
+        print(password)
+        # Intento volver a registrar al mismo paciente
+        id_paciente = self.registro_paciente("54126179V", "Lorenzo Largacha Sanz", "+34111555888", "22", "12345ABC")
+        print(id_paciente)
+        # Intento buscar un paciente que no existe
+        store_pacientes = PacienteJsonStore()
+        paciente_buscado = store_pacientes.buscar_paciente_store("54126179K")
+        print(paciente_buscado)
 
 
 if __name__ == "__main__":

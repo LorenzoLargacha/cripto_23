@@ -26,27 +26,30 @@ class MedicoJsonStore(JsonStore):
             found = False
             # Buscamos el id_medico
             item = self.find_item(medico.id_medico)
-            # Si lo encontramos
             if item is not None:
-                found = True
+                found = True    # si lo encontramos
+            try:
+                if found is False:
+                    self.add_item(medico)
+                if found is True:
+                    raise ExcepcionesGestor(self.__ERROR_MESSAGE_ID_REGISTRADO)
+                return True
 
-            if found is False:
-                self.add_item(medico)
-
-            if found is True:
-                raise ExcepcionesGestor(self.__ERROR_MESSAGE_ID_REGISTRADO)
-
-            return True
+            except ExcepcionesGestor as e:
+                print("ERROR:", e)
+                return False
 
         def buscar_medico_store(self, id_medico: str):
             """Busca un paciente en store_medicos"""
-            with open(self._FILE_PATH, "r", encoding="utf-8", newline=""):
-                item_found = self.find_item(id_medico)
+            item_found = self.find_item(id_medico)
+            try:
+                if item_found is None:
+                    raise ExcepcionesGestor(self.__ERROR_MESSAGE_ID_NO_ENCONTRADO)
+                return item_found
 
-            if item_found is None:
-                raise ExcepcionesGestor(self.__ERROR_MESSAGE_ID_NO_ENCONTRADO)
-
-            return item_found
+            except ExcepcionesGestor as e:
+                print("ERROR:", e)
+                return None
 
     __instance = None
 
