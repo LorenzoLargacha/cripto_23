@@ -50,8 +50,8 @@ class GestorCentroSalud:
                 self.KEY_LABEL_USER_SALT: salt_hex,
                 self.KEY_LABEL_USER_KEY: key_hex
             }
-            store_autenticaciones = AutenticacionJsonStore()
-            store_autenticaciones.guardar_autenticacion_store(usuario)
+            store_credenciales = AutenticacionJsonStore()
+            store_credenciales.guardar_credenciales_store(usuario)
 
         return paciente.id_paciente
 
@@ -63,8 +63,8 @@ class GestorCentroSalud:
         if paciente is None:
             return 1
         # Obtenemos el salt y la key del paciente almacenados
-        store_autenticaciones = AutenticacionJsonStore()
-        item = store_autenticaciones.buscar_autenticacion_store(paciente[self.KEY_LABEL_PACIENTE_ID])
+        store_credenciales = AutenticacionJsonStore()
+        item = store_credenciales.buscar_credenciales_store(paciente[self.KEY_LABEL_PACIENTE_ID])
         stored_salt_hex = item[self.KEY_LABEL_USER_SALT]
         stored_key_hex = item[self.KEY_LABEL_USER_KEY]
         # Convertimos el salt a bytes
@@ -120,7 +120,7 @@ class GestorCentroSalud:
         store = JSON_FILES_PATH + "store_medicos.json"
         if os.path.isfile(store):
             os.remove(store)
-        store = JSON_FILES_PATH + "store_autenticaciones.json"
+        store = JSON_FILES_PATH + "store_credenciales.json"
         if os.path.isfile(store):
             os.remove(store)
 
@@ -131,8 +131,8 @@ class GestorCentroSalud:
 
         # PRUEBAS
         # Buscar password de un paciente
-        #store_autenticaciones = AutenticacionJsonStore()
-        #item = store_autenticaciones.buscar_autenticacion_store(id_paciente)
+        #store_credenciales = AutenticacionJsonStore()
+        #item = store_credenciales.buscar_credenciales_store(id_paciente)
         #print(item[self.KEY_LABEL_USER_KEY])
         # Intento volver a registrar al mismo paciente
         #id_paciente = self.registro_paciente("54126179V", "Lorenzo Largacha Sanz", "+34111555888", "22", "12345ABC")

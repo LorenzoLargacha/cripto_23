@@ -6,11 +6,11 @@ from sistema_de_salud.cfg.gestor_centro_salud_config import JSON_FILES_PATH
 
 
 class AutenticacionJsonStore(JsonStore):
-    """Clase hija de JsonStore con los atributos para store_autenticaciones"""
+    """Clase hija de JsonStore con los atributos para store_credenciales"""
 
     class __AutenticacionJsonStore(JsonStore):
         """Clase privada, patron singleton"""
-        _FILE_PATH = JSON_FILES_PATH + "store_autenticaciones.json"
+        _FILE_PATH = JSON_FILES_PATH + "store_credenciales.json"
         _ID_FIELD = "_AutenticacionUsuario__id_usuario"
         KEY_LABEL_USER_SALT = "_AutenticacionUsuario__salt"
         KEY_LABEL_USER_KEY = "_AutenticacionUsuario__key"
@@ -24,7 +24,7 @@ class AutenticacionJsonStore(JsonStore):
             data_list.append(usuario)
             self.save_store(data_list)
 
-        def guardar_autenticacion_store(self, usuario: dict) -> True:
+        def guardar_credenciales_store(self, usuario: dict) -> True:
             """Guarda la autenticación de un usuario en un fichero Json"""
             found = False
             # Buscamos el id_usuario
@@ -39,8 +39,8 @@ class AutenticacionJsonStore(JsonStore):
 
             return True
 
-        def buscar_autenticacion_store(self, id_usuario: str):
-            """Busca la información de autenticación de un paciente en store_autenticaciones"""
+        def buscar_credenciales_store(self, id_usuario: str):
+            """Busca las credenciales de un usuario en store_credenciales"""
             item_found = self.find_item(id_usuario)
             if item_found is None:
                 raise ExcepcionesGestor(self.__ERROR_MESSAGE_ID_NO_ENCONTRADO)
