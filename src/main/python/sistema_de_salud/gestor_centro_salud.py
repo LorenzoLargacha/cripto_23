@@ -55,13 +55,13 @@ class GestorCentroSalud:
 
         return paciente.id_paciente
 
-    def autenticacion_paciente(self, id_paciente: str, password: str) -> bool:
+    def autenticacion_paciente(self, id_paciente: str, password: str):
         """Autentica a un paciente"""
         # Comprobamos que el paciente esté registrado
         store_pacientes = PacienteJsonStore()
         paciente = store_pacientes.buscar_paciente_store(id_paciente)
         if paciente is None:
-            return False
+            return 1
         # Obtenemos el salt y la key del paciente almacenados
         store_autenticaciones = AutenticacionJsonStore()
         item = store_autenticaciones.buscar_autenticacion_store(paciente[self.KEY_LABEL_PACIENTE_ID])
@@ -78,10 +78,30 @@ class GestorCentroSalud:
         key_hex = key.hex()
         print("Generated key:", key_hex)
         if key_hex != stored_key_hex:
-            print("ERROR: Contraseña incorrecta")
-            return False
-        print("Autenticación exitosa")
-        return True
+            print("Contraseña incorrecta")
+            return 2
+
+        return 0
+
+    def autenticacion_usuarios(self):
+        """Interfaz de autenticación de usuarios"""
+        print("\nINICIO DE SESIÓN\n")
+        id_usuario = input("Introduzca su ID de usuario: ")
+        for i in range(3):
+            password = input("Introduzca su contraseña: ")
+            autenticacion = self.autenticacion_paciente(id_usuario, password)
+            if autenticacion == 1:
+                # usuario no registrado
+                print("\nInicio de sesión fallido. Saliendo del programa...")
+                exit()
+            elif autenticacion == 2:
+                # usuario registrado, contraseña incorrecta
+                continue
+            else:
+                print("Autenticación exitosa")
+                return
+        print("\nInicio de sesión fallido. Saliendo del programa...")
+        exit()
 
     def registro_medico(self, id_medico: str, nombre_completo: str, telefono: str, edad: str, especialidad: str) -> str:
         """Registra a un paciente"""
@@ -104,29 +124,55 @@ class GestorCentroSalud:
         if os.path.isfile(store):
             os.remove(store)
 
-        print("Bienvenido al sistema de gestión del Centro de Salud.")
-        # PRUEBAS
         # Registrar paciente
         id_paciente = self.registro_paciente("54126179V", "Lorenzo Largacha Sanz", "+34111555888", "22", "12345ABC")
-        print(id_paciente)
         # Registrar médico
         id_medico = self.registro_medico("62108856Y", "Manuel Fernandez Gil", "+34222444777", "53", "Medicina General")
-        print(id_medico)
+
+        # PRUEBAS
         # Buscar password de un paciente
-        store_autenticaciones = AutenticacionJsonStore()
-        item = store_autenticaciones.buscar_autenticacion_store(id_paciente)
-        print(item[self.KEY_LABEL_USER_KEY])
+        #store_autenticaciones = AutenticacionJsonStore()
+        #item = store_autenticaciones.buscar_autenticacion_store(id_paciente)
+        #print(item[self.KEY_LABEL_USER_KEY])
         # Intento volver a registrar al mismo paciente
-        id_paciente = self.registro_paciente("54126179V", "Lorenzo Largacha Sanz", "+34111555888", "22", "12345ABC")
-        print(id_paciente)
+        #id_paciente = self.registro_paciente("54126179V", "Lorenzo Largacha Sanz", "+34111555888", "22", "12345ABC")
+        #print(id_paciente)
         # Intento buscar un paciente que no existe
-        store_pacientes = PacienteJsonStore()
-        paciente_buscado = store_pacientes.buscar_paciente_store("54126179K")
-        print(paciente_buscado)
+        #store_pacientes = PacienteJsonStore()
+        #paciente_buscado = store_pacientes.buscar_paciente_store("54126179K")
+        #print(paciente_buscado)
         # Autenticar los datos de un paciente
-        self.autenticacion_paciente("54126179V", "12345ABC")
+        #self.autenticacion_paciente("54126179V", "12345ABC")
         # Intento autenticar los datos de un paciente con una contraseña incorrecta
-        self.autenticacion_paciente("54126179V", "12345CCC")
+        #self.autenticacion_paciente("54126179V", "12345CCC")
+
+        print("\n\n--- Bienvenido al sistema de gestión del Centro de Salud ---")
+        self.autenticacion_usuarios()
+
+        # Interfaz paciente
+        print("\nINTERFAZ PACIENTE")
+        while True:
+            print("\nOpciones disponibles:")
+            print("1. Pedir cita")
+            print("2. Anular cita")
+            print("3. Consultar mis citas")
+            print("4. Salir")
+            opcion = input("Indique una opción (1/2/3/4): ")
+
+            if opcion == "1":
+                #pedir_cita()
+                break
+            elif opcion == "2":
+                #anular_cita()
+                break
+            elif opcion == "3":
+                #consultar_citas()
+                break
+            elif opcion == "4":
+                print("\nSaliendo del programa...")
+                break
+            else:
+                print("Opción no válida. Inténtelo de nuevo.")
 
 
 if __name__ == "__main__":

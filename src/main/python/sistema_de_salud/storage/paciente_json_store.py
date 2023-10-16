@@ -14,7 +14,7 @@ class PacienteJsonStore(JsonStore):
 
         __ERROR_MESSAGE_INVALID_OBJECT = "Objeto RegistroPaciente invalido"
         __ERROR_MESSAGE_ID_REGISTRADO = "ID del paciente ya registrado"
-        __ERROR_MESSAGE_ID_NO_ENCONTRADO = "ID del paciente no encontrado"
+        __ERROR_MESSAGE_ID_NO_ENCONTRADO = "Paciente no registrado"
 
         def guardar_paciente_store(self, paciente) -> True:
             """Guarda un paciente en un fichero Json"""
@@ -48,7 +48,7 @@ class PacienteJsonStore(JsonStore):
                 return item_found
 
             except ExcepcionesGestor as e:
-                print("ERROR:", e)
+                print(e)
                 return None
 
     __instance = None
