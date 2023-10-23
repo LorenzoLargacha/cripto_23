@@ -24,6 +24,7 @@ class GestorCentroSalud:
     KEY_LABEL_USER_ID =   "_AutenticacionUsuario__id_usuario"
     KEY_LABEL_USER_SALT = "_AutenticacionUsuario__salt"
     KEY_LABEL_USER_KEY =  "_AutenticacionUsuario__key"
+
     def __init__(self):
         pass
 
