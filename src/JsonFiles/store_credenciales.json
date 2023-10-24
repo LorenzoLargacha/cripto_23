@@ -1,7 +1,12 @@
 [
   {
     "_AutenticacionUsuario__id_usuario": "54126179V",
-    "_AutenticacionUsuario__salt": "249e3142563cf27cc96913c568d2174b",
-    "_AutenticacionUsuario__key": "f6c2a96493997cdd97934e04674c8af856ea94f2c597a3a1b67dfd0da20c6aae"
+    "_AutenticacionUsuario__salt": "94bcaba5438a66ca618d98eddf54b9d6",
+    "_AutenticacionUsuario__key": "6ca5f598d8ef873b79cf049e7aab0f219f0bf6e82721092965430cb54599cac8"
+  },
+  {
+    "_AutenticacionUsuario__id_usuario": "62108856Y",
+    "_AutenticacionUsuario__salt": "4ee07d1e28ac70764e2ea229767b993f",
+    "_AutenticacionUsuario__key": "90debee9bd6b76608318372a01f84b118adad95c55b9dddd04e1fc9002d9ff07"
   }
 ]
