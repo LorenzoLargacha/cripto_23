@@ -21,10 +21,10 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 class GestorCentroSalud:
     """Clase que proporciona los métodos para gestionar un Centro de Salud"""
     KEY_LABEL_PACIENTE_ID = "_RegistroPaciente__id_paciente"
-    KEY_LABEL_MEDICO_ID = "_RegistroMedico__id_medico"
-    KEY_LABEL_USER_ID =   "_AutenticacionUsuario__id_usuario"
-    KEY_LABEL_USER_SALT = "_AutenticacionUsuario__salt"
-    KEY_LABEL_USER_KEY =  "_AutenticacionUsuario__key"
+    KEY_LABEL_MEDICO_ID =   "_RegistroMedico__id_medico"
+    KEY_LABEL_USER_ID =     "_AutenticacionUsuario__id_usuario"
+    KEY_LABEL_USER_SALT =   "_AutenticacionUsuario__salt"
+    KEY_LABEL_USER_KEY =    "_AutenticacionUsuario__key"
 
     def __init__(self):
         pass
@@ -54,7 +54,6 @@ class GestorCentroSalud:
             }
             store_credenciales = AutenticacionJsonStore()
             store_credenciales.guardar_credenciales_store(usuario)
-
         return paciente.id_paciente
 
     def registro_medico(self, id_medico: str, nombre_completo: str, telefono: str, edad: str, especialidad: str, password: str) -> str:
@@ -83,7 +82,6 @@ class GestorCentroSalud:
             }
             store_credenciales = AutenticacionJsonStore()
             store_credenciales.guardar_credenciales_store(usuario)
-
         return medico.id_medico
 
     def autenticacion_paciente(self, id_paciente: str, password: str):
@@ -98,10 +96,10 @@ class GestorCentroSalud:
         item = store_credenciales.buscar_credenciales_store(paciente[self.KEY_LABEL_PACIENTE_ID])
         stored_salt_hex = item[self.KEY_LABEL_USER_SALT]
         stored_key_hex = item[self.KEY_LABEL_USER_KEY]
+        print("Stored salt: ", stored_salt_hex)
+        print("Stored key:   ", stored_key_hex)
         # Convertimos el salt a bytes
         stored_salt = bytes.fromhex(stored_salt_hex)
-        print("Stored salt:", stored_salt_hex)
-        print("Stored key   :", stored_key_hex)
         # Derivamos la clave a partir del password introducido por el usuario
         kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=stored_salt, iterations=480000)
         key = kdf.derive(password.encode('utf-8'))
@@ -109,27 +107,26 @@ class GestorCentroSalud:
         key_hex = key.hex()
         print("Generated key:", key_hex)
         if key_hex != stored_key_hex:
-            print("Contraseña incorrecta")
+            print("Contraseña incorrecta\n")
             return 2
-
         return 0
 
     def autenticacion_medico(self, id_medico: str, password: str):
-        """Autentica a un medico"""
-        # Comprobamos que el medico esté registrado
+        """Autentica a un médico"""
+        # Comprobamos que el médico esté registrado
         store_medicos = MedicoJsonStore()
         medico = store_medicos.buscar_medico_store(id_medico)
         if medico is None:
             return 1
-        # Obtenemos el salt y la key del medico almacenados
+        # Obtenemos el salt y la key del médico almacenados
         store_credenciales = AutenticacionJsonStore()
         item = store_credenciales.buscar_credenciales_store(medico[self.KEY_LABEL_MEDICO_ID])
         stored_salt_hex = item[self.KEY_LABEL_USER_SALT]
         stored_key_hex = item[self.KEY_LABEL_USER_KEY]
+        print("Stored salt: ", stored_salt_hex)
+        print("Stored key:   ", stored_key_hex)
         # Convertimos el salt a bytes
         stored_salt = bytes.fromhex(stored_salt_hex)
-        print("Stored salt:", stored_salt_hex)
-        print("Stored key   :", stored_key_hex)
         # Derivamos la clave a partir del password introducido por el usuario
         kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=stored_salt, iterations=480000)
         key = kdf.derive(password.encode('utf-8'))
@@ -137,51 +134,77 @@ class GestorCentroSalud:
         key_hex = key.hex()
         print("Generated key:", key_hex)
         if key_hex != stored_key_hex:
-            print("Contraseña incorrecta")
+            print("Contraseña incorrecta\n")
             return 2
-
         return 0
 
-    def autenticacion_usuarios(self):
+    def autenticacion_usuarios(self, tipo_usuario: str) -> bool:
         """Interfaz de autenticación de usuarios"""
         print("\nINICIO DE SESIÓN\n")
-        id_usuario = input("Introduzca su ID de usuario: ")
         for i in range(3):
+            id_usuario = input("Introduzca su ID de usuario: ")
             password = input("Introduzca su contraseña: ")
-            autenticacion = self.autenticacion_paciente(id_usuario, password)
+            if tipo_usuario == "paciente":
+                autenticacion = self.autenticacion_paciente(id_usuario, password)
+            elif tipo_usuario == "medico":
+                autenticacion = self.autenticacion_medico(id_usuario, password)
+
             if autenticacion == 1:
                 # usuario no registrado
-                print("\nInicio de sesión fallido. Saliendo del programa...")
-                exit()
+                print("\nInicio de sesión fallido. Volviendo al inicio...")
+                return False
             elif autenticacion == 2:
                 # usuario registrado, contraseña incorrecta
                 continue
             else:
-                print("Autenticación exitosa")
-                return
-        print("\nInicio de sesión fallido. Saliendo del programa...")
-        exit()
+                print("Autenticación exitosa\n")
+                return True
+        print("Inicio de sesión fallido. Volviendo al inicio...")
+        return False
 
-    def autenticacion_medicos(self):
-        """Interfaz de autenticación de medicos"""
-        print("\nINICIO DE SESIÓN\n")
-        id_usuario = input("Introduzca su ID de usuario: ")
-        for i in range(3):
-            password = input("Introduzca su contraseña: ")
-            autenticacion = self.autenticacion_medico(id_usuario, password)
-            if autenticacion == 1:
-                # usuario no registrado
-                print("\nInicio de sesión fallido. Saliendo del programa...")
-                exit()
-            elif autenticacion == 2:
-                # usuario registrado, contraseña incorrecta
+    def interfaz_paciente(self):
+        # Interfaz paciente
+        print("\nINTERFAZ PACIENTE")
+        while True:
+            print("\nOpciones disponibles:")
+            print("1. Pedir cita")
+            print("2. Anular cita")
+            print("3. Consultar mis citas")
+            print("4. Cerrar sesión")
+            opcion = input("Indique una opción (1/2/3/4): ")
+
+            if opcion == "1":
+                # pedir_cita()
                 continue
+            elif opcion == "2":
+                # anular_cita()
+                continue
+            elif opcion == "3":
+                # consultar_citas()
+                continue
+            elif opcion == "4":
+                print("\nCerrando sesión...")
+                break
             else:
-                print("Autenticación exitosa")
-                return
-        print("\nInicio de sesión fallido. Saliendo del programa...")
-        exit()
+                print("Opción no válida. Inténtelo de nuevo.")
 
+    def interfaz_medico(self):
+        # Interfaz medico
+        print("\nINTERFAZ MÉDICO")
+        while True:
+            print("\nOpciones disponibles:")
+            print("1. Consultar mis citas")
+            print("2. Cerrar sesión")
+            opcion = input("Indique una opción (1/2): ")
+
+            if opcion == "1":
+                # consultar citas
+                continue
+            elif opcion == "2":
+                print("\nCerrando sesión...")
+                break
+            else:
+                print("Opción no válida. Inténtelo de nuevo.")
 
     def main(self):
         """Función Principal"""
@@ -197,9 +220,9 @@ class GestorCentroSalud:
             os.remove(store)
 
         # Registrar paciente
-        id_paciente = self.registro_paciente("54126179V", "Lorenzo Largacha Sanz", "+34111555888", "22", "12345ABC")
+        self.registro_paciente("54126179V", "Lorenzo Largacha Sanz", "+34111555888", "22", "12345ABC")
         # Registrar médico
-        id_medico = self.registro_medico("62108856Y", "Manuel Fernandez Gil", "+34222444777", "53", "Medicina General", "1234asdf")
+        self.registro_medico("62108856Y", "Manuel Fernandez Gil", "+34222444777", "53", "Medicina General", "1234asdf")
 
         # PRUEBAS
         # Buscar password de un paciente
@@ -218,55 +241,35 @@ class GestorCentroSalud:
         # Intento autenticar los datos de un paciente con una contraseña incorrecta
         #self.autenticacion_paciente("54126179V", "12345CCC")
 
-        print("\n\n--- Bienvenido al sistema de gestión del Centro de Salud ---")
-        tipo = input("\n ¿Es usted paciente o médico? ")
-        if tipo == "paciente":
-            self.autenticacion_usuarios()
+        # Menu de inicio
+        while True:
+            print("\n\n--- Bienvenido al sistema de gestión del Centro de Salud ---")
+            print("\nOpciones disponibles:")
+            print("1. Acceso Pacientes")
+            print("2. Acceso Médicos")
+            print("3. Acceso Administrador")
+            print("4. Salir del sistema")
+            opcion = input("Indique una opción (1/2/3/4): ")
+            tipo_usuario = ""
 
-            # Interfaz paciente
-            print("\nINTERFAZ PACIENTE")
-            while True:
-                print("\nOpciones disponibles:")
-                print("1. Pedir cita")
-                print("2. Anular cita")
-                print("3. Consultar mis citas")
-                print("4. Salir")
-                opcion = input("Indique una opción (1/2/3/4): ")
-
-                if opcion == "1":
-                    #pedir_cita()
-                    break
-                elif opcion == "2":
-                    #anular_cita()
-                    break
-                elif opcion == "3":
-                    #consultar_citas()
-                    break
-                elif opcion == "4":
-                    print("\nSaliendo del programa...")
-                    break
-                else:
-                    print("Opción no válida. Inténtelo de nuevo.")
-
-        if tipo == "médico":
-            self.autenticacion_medicos()
-
-            # Interfaz paciente
-            print("\nINTERFAZ MÉDICO")
-            while True:
-                print("\nOpciones disponibles:")
-                print("1. Consultar mis citas")
-                print("2. Salir")
-                opcion = input("Indique una opción (1/2): ")
-
-                if opcion == "1":
-                    # pedir_cita()
-                    break
-                elif opcion == "2":
-                    print("\nSaliendo del programa...")
-                    break
-                else:
-                    print("Opción no válida. Inténtelo de nuevo.")
+            if opcion == "1":
+                tipo_usuario = "paciente"
+                if not self.autenticacion_usuarios(tipo_usuario):
+                    continue
+                self.interfaz_paciente()
+            elif opcion == "2":
+                tipo_usuario = "medico"
+                if not self.autenticacion_usuarios(tipo_usuario):
+                    continue
+                self.interfaz_medico()
+            elif opcion == "3":
+                # Acceso Administrador
+                break
+            elif opcion == "4":
+                print("\nSaliendo del sistema...")
+                break
+            else:
+                print("Opción no válida. Inténtelo de nuevo.")
 
 
 if __name__ == "__main__":
