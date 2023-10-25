@@ -1,12 +1,12 @@
 [
   {
     "_AutenticacionUsuario__id_usuario": "54126179V",
-    "_AutenticacionUsuario__salt": "9760f2f3b01aad0a5fac1f3f15816dc2",
-    "_AutenticacionUsuario__key": "b5edaf7926c74d13625ad734c655dee047125c9d7cfd995bc386639fdeb17822"
+    "_AutenticacionUsuario__salt": "64a288cffabe2211736e6e597b11c2f4",
+    "_AutenticacionUsuario__key": "b870fe525d3c0c11f44422d6afb2d4e5db0a320fbdc6074b55ad54fb417df094"
   },
   {
     "_AutenticacionUsuario__id_usuario": "62108856Y",
-    "_AutenticacionUsuario__salt": "0aaf32ed3fca340b1da522b38f3804d9",
-    "_AutenticacionUsuario__key": "7de1568d19453a3832efc5a696d335eb8b7d5a118f5395d8ca5d516a659c1764"
+    "_AutenticacionUsuario__salt": "f148f7eefcedbbfdcdc6b4271d9f21de",
+    "_AutenticacionUsuario__key": "d8d629b2fddb21faf7c64fd40b2fa61d24d231d919ea7de89ad9f053f3a8c46e"
   }
 ]

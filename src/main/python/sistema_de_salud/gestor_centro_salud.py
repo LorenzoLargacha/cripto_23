@@ -9,6 +9,7 @@ from sistema_de_salud.storage.autenticacion_json_store import AutenticacionJsonS
 
 from sistema_de_salud.registro_paciente import RegistroPaciente
 from sistema_de_salud.registro_medico import RegistroMedico
+from sistema_de_salud.cita_medica import CitaMedica
 from sistema_de_salud.cfg.gestor_centro_salud_config import JSON_FILES_PATH
 
 from cryptography.hazmat.primitives import hashes
@@ -64,6 +65,36 @@ class GestorCentroSalud:
 
         # Solo si el paciente es registrado correctamente (y no estaba registrado antes)
         if registro_medico is True:
+            # Derivamos una password segura mediante una KDF (Key Derivation Function)
+            salt = os.urandom(16)   # generamos un salt aleatorio, los valores seguros tienen 16 bytes (128 bits) o más
+            # Algoritmo de coste variable PBKDF2 (Password Based Key Derivation Function 2)
+            # algoritmo: SHA256 ... ; longitud max: 2^32 - 1 ; iteraciones: más iteraciones puede mitigar brute force attacks
+            kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=480000)
+            # Derivamos la clave criptográfica
+            key = kdf.derive(password.encode('utf-8'))      # encode('utf-8') para convertir de string a bytes
+            # Convertimos salt y derived key en strings hexadecimales para almacenarlas
+            salt_hex = salt.hex()
+            key_hex = key.hex()
+            # Guardamos la información de autenticación
+            usuario = {
+                self.KEY_LABEL_USER_ID: id_medico,
+                self.KEY_LABEL_USER_SALT: salt_hex,
+                self.KEY_LABEL_USER_KEY: key_hex
+            }
+            store_credenciales = AutenticacionJsonStore()
+            store_credenciales.guardar_credenciales_store(usuario)
+        return medico.id_medico
+
+    def registro_cita(self, id_paciente: str, id_medico: str, telefono_paciente: str, hora_cita: str, fecha_cita: str, especialidad: str) -> str:
+        """Registra una cita médica"""
+        medico = CitaMedica(id_medico, nombre_completo, telefono, edad, especialidad)
+        store_citas = CitasJsonStore()
+        registro_cita = store_citas.guardar_cita_store(cita)
+
+
+
+        # Solo si el paciente es registrado correctamente (y no estaba registrado antes)
+        if registro_cita is True:
             # Derivamos una password segura mediante una KDF (Key Derivation Function)
             salt = os.urandom(16)   # generamos un salt aleatorio, los valores seguros tienen 16 bytes (128 bits) o más
             # Algoritmo de coste variable PBKDF2 (Password Based Key Derivation Function 2)
@@ -218,6 +249,9 @@ class GestorCentroSalud:
         store = JSON_FILES_PATH + "store_credenciales.json"
         if os.path.isfile(store):
             os.remove(store)
+        store = JSON_FILES_PATH + "store_citas.json"
+        if os.path.isfile(store):
+            os.remove(store)
 
         # Registrar paciente
         self.registro_paciente("54126179V", "Lorenzo Largacha Sanz", "+34111555888", "22", "12345ABC")
@@ -276,6 +310,77 @@ if __name__ == "__main__":
     gestor_centro_salud = GestorCentroSalud()
     gestor_centro_salud.main()
 
+###################### PROVISIONAL ENCRIPTADO FERNET ######################
+
+import os
+from Crypto.Cipher import AES
+from Crypto.PublicKey import RSA
+
+
+# Paso 1: Generar una clave simétrica
+def generar_clave_simetrica():
+    clave = os.urandom(16)  # 128 bits para AES
+    return clave
+
+
+# Paso 2: Cifrar información de la cita
+def cifrar_informacion_cita(informacion, clave_simetrica):
+    cipher = AES.new(clave_simetrica, AES.MODE_EAX)
+    nonce = cipher.nonce
+    ciphertext, tag = cipher.encrypt_and_digest(informacion.encode())
+    return nonce, ciphertext, tag
+
+
+# Paso 3: Descifrar información de la cita por el médico
+def descifrar_informacion_cita(nonce, ciphertext, tag, clave_simetrica):
+    cipher = AES.new(clave_simetrica, AES.MODE_EAX, nonce=nonce)
+    informacion = cipher.decrypt(ciphertext).decode()
+    return informacion
+
+
+# Paso 4: Cifrar mensaje de confirmación del médico
+def cifrar_mensaje_confirmacion(mensaje, clave_simetrica):
+    cipher = AES.new(clave_simetrica, AES.MODE_EAX)
+    nonce = cipher.nonce
+    ciphertext, tag = cipher.encrypt_and_digest(mensaje.encode())
+    return nonce, ciphertext, tag
+
+
+# Paso 5: Almacenar información de la cita
+def almacenar_informacion_cita_en_archivo(informacion_cita, clave_publica_paciente):
+    # Cifrar información privada con la clave pública del paciente
+    cifrador = RSA.import_key(clave_publica_paciente)
+    informacion_privada_cifrada = cifrador.encrypt(informacion_cita.encode(), 0)
+
+    # Almacenar la información cifrada en un archivo
+
+
+# Paso 6: Acceso del médico a su información de citas
+def acceder_a_informacion_de_citas(clave_privada_medico):
+
+
+# Descifrar la información con la clave privada del médico
+
+# Ejemplo de uso
+if __name__ == "__main__":
+    # Paso 1: Generar una clave simétrica
+    clave_simetrica = generar_clave_simetrica()
+
+    # Paso 2: Cifrar información de la cita
+    informacion_cita = "ID:1234, Fecha:2023-10-26, Paciente:Juan, Motivo:Examen de rutina"
+    nonce, ciphertext, tag = cifrar_informacion_cita(informacion_cita, clave_simetrica)
+
+    # Paso 3: Descifrar información de la cita por el médico
+    informacion_descifrada = descifrar_informacion_cita(nonce, ciphertext, tag, clave_simetrica)
+    print("Información de la cita descifrada:", informacion_descifrada)
+
+    # Paso 4: Cifrar mensaje de confirmación del médico
+    mensaje_confirmacion = "Cita confirmada para el paciente Juan."
+    nonce, ciphertext, tag = cifrar_mensaje_confirmacion(mensaje_confirmacion, clave_simetrica)
+
+    # Paso 5: Almacenar información de la cita (debe completarse con el manejo de claves públicas del paciente)
+
+    # Paso 6: Acceso del médico a su información de citas (debe completarse con el manejo de claves privadas del médico)
 
 ################################## version con crifrado RSA ######################
 """
