@@ -10,7 +10,6 @@ from sistema_de_salud.exception.excepciones_gestor import ExcepcionesGestor
 class CitaMedica:
     """Clase que representa una cita médica de un paciente"""
     def __init__(self, id_medico, especialidad, fecha_hora, id_paciente, telefono_paciente, motivo_consulta, estado_cita="Activa"):
-
         # Creamos los atributos
         self.__id_medico = id_medico
         self.__especialidad = especialidad
@@ -43,7 +42,8 @@ class CitaMedica:
                    cita_encontrada["_CitaMedica__fecha_hora"],
                    cita_encontrada["_CitaMedica__id_paciente"],
                    cita_encontrada["_CitaMedica__telefono_paciente"],
-                   cita_encontrada["_CitaMedica__motivo_consulta"])
+                   cita_encontrada["_CitaMedica__motivo_consulta"],
+                   cita_encontrada["_CitaMedica__estado_cita"])
         freezer.stop()
         return cita
 

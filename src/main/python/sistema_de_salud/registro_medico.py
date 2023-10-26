@@ -1,5 +1,4 @@
 """RegistroMedico"""
-import hashlib
 import json
 from datetime import datetime
 from freezegun import freeze_time
@@ -19,9 +18,7 @@ class RegistroMedico:
         self.__especialidad = especialidad
         justnow = datetime.utcnow()
         self.__time_stamp = datetime.timestamp(justnow)
-
-        # evitamos que cambie la hora (borrar despues, solo sirve para los tests)
-        # self.__time_stamp = 1646300783.846215
+        self.__mis_citas = []
 
         # añadimos el atributo usuario_sys_id para que se guarde en store_medicos
         #self.__usuario_sys_id = self.user_system_id
@@ -46,6 +43,9 @@ class RegistroMedico:
                      medico_encontrado["_RegistroMedico__edad"],
                      medico_encontrado["_RegistroMedico__especialidad"])
         freezer.stop()
+        lista_citas = medico_encontrado["_RegistroMedico__mis_citas"]
+        for item in lista_citas:
+            medico.registrar_cita_medico(item)
         return medico
 
     @property
@@ -93,6 +93,19 @@ class RegistroMedico:
     def time_stamp(self):
         """Read-only property que devuelve el timestamp del registro"""
         return self.__time_stamp
+
+    @property
+    def mis_citas(self):
+        """Property que representa las citas del médico"""
+        return self.__mis_citas
+
+    def registrar_cita_medico(self, info_cita):
+        """Añade la información de una cita a la lista mis_citas del médico"""
+        self.__mis_citas.append(info_cita)
+
+    def borrar_cita_medico(self, info_cita):
+        """Borra la información de una cita de la lista mis_citas del médico"""
+        self.__mis_citas.remove(info_cita)
 
     #@property
     #def user_system_id(self):

@@ -1,5 +1,4 @@
 """Module autenticacion_json_store"""
-import json
 from sistema_de_salud.storage.json_store import JsonStore
 from sistema_de_salud.exception.excepciones_gestor import ExcepcionesGestor
 from sistema_de_salud.cfg.gestor_centro_salud_config import JSON_FILES_PATH

@@ -62,3 +62,16 @@ class JsonStore:
         data_list = self.load_store()
         data_list.append(item.__dict__)
         self.save_store(data_list)
+
+    def update_item(self, item, key_value):
+        """Actualiza un item en el datalist y modifica el fichero Json"""
+        # Cargamos los datos del fichero
+        data_list = self.load_store()
+        # Buscamos el item antiguo que se quiere actualizar
+        item_to_update = self.find_item(key_value)
+        # Borramos el item antiguo
+        data_list.remove(item_to_update)
+        # Añadimos el item nuevo a la lista de diccionarios
+        data_list.append(item.__dict__)
+        # Guardamos la lista en el fichero
+        self.save_store(data_list)
