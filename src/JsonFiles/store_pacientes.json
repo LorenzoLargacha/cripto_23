@@ -1,9 +1,16 @@
 [
   {
-    "_RegistroPaciente__id_paciente": "54126179V",
+    "_RegistroPaciente__id_paciente": "54026189V",
     "_RegistroPaciente__nombre_completo": "Lorenzo Largacha Sanz",
+    "_RegistroPaciente__telefono": "+34666888166",
+    "_RegistroPaciente__edad": "22",
+    "_RegistroPaciente__time_stamp": 1698315907.25728
+  },
+  {
+    "_RegistroPaciente__id_paciente": "58849111T",
+    "_RegistroPaciente__nombre_completo": "Pedro Hernandez Bernaldo",
     "_RegistroPaciente__telefono": "+34111555888",
     "_RegistroPaciente__edad": "22",
-    "_RegistroPaciente__time_stamp": 1698244106.00402
+    "_RegistroPaciente__time_stamp": 1698315907.464471
   }
 ]

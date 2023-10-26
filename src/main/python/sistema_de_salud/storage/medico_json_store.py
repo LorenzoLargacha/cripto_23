@@ -16,7 +16,7 @@ class MedicoJsonStore(JsonStore):
         __ERROR_MESSAGE_ID_REGISTRADO = "ID del médico ya registrado"
         __ERROR_MESSAGE_ID_NO_ENCONTRADO = "Médico no registrado"
 
-        def guardar_medico_store(self, medico) -> True:
+        def guardar_medico_store(self, medico: object) -> True:
             """Guarda un médico en un fichero Json"""
             # Importamos aquí RegistroMedico para evitar import circular
             from sistema_de_salud.registro_medico import RegistroMedico

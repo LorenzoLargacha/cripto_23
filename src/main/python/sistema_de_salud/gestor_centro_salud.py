@@ -2,10 +2,12 @@
 import os
 import json
 import hashlib
+from datetime import datetime
 
 from sistema_de_salud.storage.paciente_json_store import PacienteJsonStore
 from sistema_de_salud.storage.medico_json_store import MedicoJsonStore
 from sistema_de_salud.storage.autenticacion_json_store import AutenticacionJsonStore
+from sistema_de_salud.storage.cita_json_store import CitaJsonStore
 
 from sistema_de_salud.registro_paciente import RegistroPaciente
 from sistema_de_salud.registro_medico import RegistroMedico
@@ -85,35 +87,20 @@ class GestorCentroSalud:
             store_credenciales.guardar_credenciales_store(usuario)
         return medico.id_medico
 
-    def registro_cita(self, id_paciente: str, id_medico: str, telefono_paciente: str, hora_cita: str, fecha_cita: str, especialidad: str) -> str:
+    def registro_cita(self, id_medico: str, especialidad: str, fecha_hora, id_paciente: str, telefono_paciente: str, motivo_consulta: str) -> str:
         """Registra una cita médica"""
-        medico = CitaMedica(id_medico, nombre_completo, telefono, edad, especialidad)
-        store_citas = CitasJsonStore()
+        cita = CitaMedica(id_medico, especialidad, fecha_hora, id_paciente, telefono_paciente, motivo_consulta)
+
+        # Encriptar (cifrado simétrico),
+        # Enviar al médico
+        # Recibir confirmación y desencriptarla
+
+        store_citas = CitaJsonStore()
         registro_cita = store_citas.guardar_cita_store(cita)
 
-
-
-        # Solo si el paciente es registrado correctamente (y no estaba registrado antes)
+        # Solo si la cita es registrada correctamente (y no estaba registrada antes)
         if registro_cita is True:
-            # Derivamos una password segura mediante una KDF (Key Derivation Function)
-            salt = os.urandom(16)   # generamos un salt aleatorio, los valores seguros tienen 16 bytes (128 bits) o más
-            # Algoritmo de coste variable PBKDF2 (Password Based Key Derivation Function 2)
-            # algoritmo: SHA256 ... ; longitud max: 2^32 - 1 ; iteraciones: más iteraciones puede mitigar brute force attacks
-            kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=480000)
-            # Derivamos la clave criptográfica
-            key = kdf.derive(password.encode('utf-8'))      # encode('utf-8') para convertir de string a bytes
-            # Convertimos salt y derived key en strings hexadecimales para almacenarlas
-            salt_hex = salt.hex()
-            key_hex = key.hex()
-            # Guardamos la información de autenticación
-            usuario = {
-                self.KEY_LABEL_USER_ID: id_medico,
-                self.KEY_LABEL_USER_SALT: salt_hex,
-                self.KEY_LABEL_USER_KEY: key_hex
-            }
-            store_credenciales = AutenticacionJsonStore()
-            store_credenciales.guardar_credenciales_store(usuario)
-        return medico.id_medico
+            return cita.identificador_cita
 
     def autenticacion_paciente(self, id_paciente: str, password: str):
         """Autentica a un paciente"""
@@ -193,6 +180,45 @@ class GestorCentroSalud:
         print("Inicio de sesión fallido. Volviendo al inicio...")
         return False
 
+    def pedir_cita(self):
+        """Solicitar una cita médica"""
+        print("\nSOLICITUD CITA")
+        while True:
+            print("\nCon qué médico desea pedir cita:")
+            print("1. Manuel Fernandez Gil - Atención Primaria")
+            print("2. Isabel Gómez Rivas - Pediatría")
+            print("3. Juan Martín Pérez - Odontología")
+            print("4. Candela Martínez Sanchéz - Matrona")
+            print("5. Cancelar")
+            opcion = input("Indique una opción (1/2/3/4...): ")
+
+            if opcion == "1":
+                id_medico = "76281872A"
+            elif opcion == "2":
+                id_medico = "84202258V"
+            elif opcion == "3":
+                id_medico = "92213124Y"
+            elif opcion == "4":
+                id_medico = "67720890N"
+            elif opcion == "5":
+                print("\nCancelando solicitud...")
+                break
+            else:
+                print("Opción no válida. Inténtelo de nuevo.")
+                continue
+            # YYYY-MM-DD HH:MM:SS
+            fecha_str = input("\nIntroduzca una fecha (YYYY-MM-DD): ")
+
+            # consultar disponibilidad
+
+            hora_str = input("\nIntroduzca una hora (HH:MM): ")
+
+            fecha_hora_str = fecha_str + " " + hora_str + ":00"
+            # Convert the string to a datetime object
+            fecha_hora = datetime.strptime(fecha_hora_str, "%Y-%m-%d %H:%M:%S")
+            break
+            # self.registro_cita()
+
     def interfaz_paciente(self):
         # Interfaz paciente
         print("\nINTERFAZ PACIENTE")
@@ -205,7 +231,7 @@ class GestorCentroSalud:
             opcion = input("Indique una opción (1/2/3/4): ")
 
             if opcion == "1":
-                # pedir_cita()
+                self.pedir_cita()
                 continue
             elif opcion == "2":
                 # anular_cita()
@@ -253,11 +279,17 @@ class GestorCentroSalud:
         if os.path.isfile(store):
             os.remove(store)
 
-        # Registrar paciente
-        self.registro_paciente("54126179V", "Lorenzo Largacha Sanz", "+34111555888", "22", "12345ABC")
-        # Registrar médico
-        self.registro_medico("62108856Y", "Manuel Fernandez Gil", "+34222444777", "53", "Medicina General", "1234asdf")
-
+        # Registrar pacientes
+        self.registro_paciente("54026189V", "Lorenzo Largacha Sanz", "+34666888166", "22", "12345ABC")
+        self.registro_paciente("58849111T", "Pedro Hernandez Bernaldo", "+34111555888", "22", "12345ABC")
+        # Registrar médicos
+        self.registro_medico("76281872A", "Manuel Fernandez Gil", "+34222444777", "51", "Atencion Primaria", "1234asdf")
+        self.registro_medico("84202258V", "Isabel Gomez Rivas", "+34333444666", "42", "Pediatria", "1234asdf")
+        self.registro_medico("92213124Y", "Juan Martin Perez", "+34555444222", "36", "Odontologia", "1234asdf")
+        self.registro_medico("67720890N", "Candela Martinez Sanchez", "+34888444111", "38", "Matrona", "1234asdf")
+        # Registrar cita
+        fecha_hora = datetime(2023, 10, 31, 14, 30)
+        self.registro_cita("76281872A", "Atencion Primaria", fecha_hora, "54026189V", "+34666888166", "Dolor de cabeza")
         # PRUEBAS
         # Buscar password de un paciente
         #store_credenciales = AutenticacionJsonStore()
@@ -311,7 +343,7 @@ if __name__ == "__main__":
     gestor_centro_salud.main()
 
 ###################### PROVISIONAL ENCRIPTADO FERNET ######################
-
+"""
 import os
 from Crypto.Cipher import AES
 from Crypto.PublicKey import RSA
@@ -381,6 +413,7 @@ if __name__ == "__main__":
     # Paso 5: Almacenar información de la cita (debe completarse con el manejo de claves públicas del paciente)
 
     # Paso 6: Acceso del médico a su información de citas (debe completarse con el manejo de claves privadas del médico)
+"""
 
 ################################## version con crifrado RSA ######################
 """

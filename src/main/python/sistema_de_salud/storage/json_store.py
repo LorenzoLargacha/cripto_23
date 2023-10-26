@@ -36,13 +36,26 @@ class JsonStore:
             raise ExcepcionesGestor(self.__ERROR_MESSAGE_JSON_DECODE) from exception
         return data_list
 
-    def find_item(self, item_to_find: str) -> any:
-        """Busca el valor de un item key en un fichero Json"""
+    def find_item(self, key_value: str, key=None):
+        """Busca el primer item con item[key]=key_value en un fichero Json"""
         data_list = self.load_store()
+        if key is None:     # si no se especifica key será ID_FIELD
+            key = self._ID_FIELD
         for item in data_list:
-            if item[self._ID_FIELD] == item_to_find:
+            if item[key] == key_value:
                 return item
         return None
+
+    def find_items_list(self, key_value, key=None):
+        """Busca todos los items con item[key]=key_value en un fichero Json"""
+        data_list = self.load_store()
+        if key is None:
+            key = self._ID_FIELD
+        data_list_result = []
+        for item in data_list:
+            if item[key] == key_value:
+                data_list_result.append(item)
+        return data_list_result
 
     def add_item(self, item: object) -> None:
         """Añade un item a un fichero Json"""

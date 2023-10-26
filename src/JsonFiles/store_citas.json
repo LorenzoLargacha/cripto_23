@@ -1,0 +1,12 @@
+[
+  {
+    "_CitaMedica__id_medico": "76281872A",
+    "_CitaMedica__especialidad": "Atencion Primaria",
+    "_CitaMedica__fecha_hora": "2023-10-31 14:30:00",
+    "_CitaMedica__id_paciente": "54026189V",
+    "_CitaMedica__telefono_paciente": "+34666888166",
+    "_CitaMedica__motivo_consulta": "Dolor de cabeza",
+    "_CitaMedica__identificador_cita": "ff073210eb8b4e09cfe075c0fedd5b606acd0d3bee25e28c4d705e5b2ba39484",
+    "_CitaMedica__estado_cita": "Activa"
+  }
+]
