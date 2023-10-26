@@ -35,11 +35,11 @@ class CitaMedica:
         # *** Cuando cifremos con clave pública habrá que descifrar cita_encontrada ***
         # Ponemos el freeze_time a cuando la cita fue registrada para mantener el time_stamp
         freezer = freeze_time(
-            datetime.fromtimestamp(cita_encontrada["_CitaMedica__issued_at"]).date())
+            datetime.utcfromtimestamp(cita_encontrada["_CitaMedica__issued_at"]))
         freezer.start()
         cita = cls(cita_encontrada["_CitaMedica__id_medico"],
                    cita_encontrada["_CitaMedica__especialidad"],
-                   cita_encontrada["_CitaMedica__fecha_hora"],
+                   datetime.strptime(cita_encontrada["_CitaMedica__fecha_hora"], "%Y-%m-%d %H:%M:%S"),
                    cita_encontrada["_CitaMedica__id_paciente"],
                    cita_encontrada["_CitaMedica__telefono_paciente"],
                    cita_encontrada["_CitaMedica__motivo_consulta"],
@@ -56,6 +56,30 @@ class CitaMedica:
     def mostrar_info_publica(self) -> str:
         """Devuleve la información pública de la cita como un string"""
         return f"CITA: Fecha: {self.fecha_hora}, Medico: {self.id_medico}, Especialidad: {self.especialidad}"
+
+    def modificar_estado_cita(self) -> None:
+        """Modifica el estado de la cita en el objeto CitaMedica"""
+        # Comprobamos si la fecha de la cita recibida ya ha pasado
+        appointment_days = (datetime.strptime(self.__fecha_hora, "%Y-%m-%d %H:%M:%S").timestamp() / 3600) / 24
+        today_time_stamp = datetime.timestamp(datetime.utcnow())
+        today_days = (today_time_stamp / 3600) / 24
+        try:
+            if appointment_days < today_days:
+                raise ExcepcionesGestor("\nLa fecha de la cita introducida ya ha pasado")
+            # Si la cita esta activa
+            if self.__estado_cita == "Activa":
+                self.__estado_cita = "Cancelada"
+            # Si la cita ya está cancelada
+            elif self.__estado_cita == "Cancelada":
+                raise ExcepcionesGestor("\nLa cita introducida ya está cancelada")
+        except ExcepcionesGestor as e:
+            print(e)
+
+    def actualizar_cita_store(self) -> None:
+        """Modifica la cita en store_citas"""
+        store_citas = CitaJsonStore()
+        store_citas.update_item(self, self.__identificador_cita)
+
 
     @property
     def id_medico(self):

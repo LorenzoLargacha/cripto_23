@@ -34,7 +34,7 @@ class RegistroPaciente:
             raise ExcepcionesGestor("Objeto RegistroPaciente no encontrado")
         # Ponemos el freeze_time cuando el paciente fue registrado para mantener el time_stamp
         freezer = freeze_time(
-            datetime.fromtimestamp(paciente_encontrado["_RegistroPaciente__time_stamp"]).date())
+            datetime.utcfromtimestamp(paciente_encontrado["_RegistroPaciente__time_stamp"]))
         freezer.start()
         paciente = cls(paciente_encontrado["_RegistroPaciente__id_paciente"],
                        paciente_encontrado["_RegistroPaciente__nombre_completo"],
@@ -45,6 +45,11 @@ class RegistroPaciente:
         for item in lista_citas:
             paciente.registrar_cita_paciente(item)
         return paciente
+
+    def actualizar_paciente_store(self) -> None:
+        """Modifica el paciente en store_pacientes"""
+        store_pacientes = PacienteJsonStore()
+        store_pacientes.update_item(self, self.__id_paciente)
 
     @property
     def id_paciente(self):
@@ -86,15 +91,18 @@ class RegistroPaciente:
     @property
     def mis_citas(self):
         """Property que representa las citas del paciente"""
+        # ** Método que descifrará la información de cada cita **
         return self.__mis_citas
 
-    def registrar_cita_paciente(self, identificador_cita):
+    def registrar_cita_paciente(self, info_cita):
         """Añade una cita a la lista mis_citas del paciente"""
-        self.__mis_citas.append(identificador_cita)
+        # ** Método que cifrará la información de cada cita **
+        self.__mis_citas.append(info_cita)
 
-    def borrar_cita_paciente(self, identificador_cita):
+    def borrar_cita_paciente(self, info_cita):
         """Borra una cita de la lista mis_citas del paciente"""
-        self.__mis_citas.remove(identificador_cita)
+        # ** Método que cifrará la información de cada cita **
+        self.__mis_citas.remove(info_cita)
 
     #@property
     #def user_system_id(self):

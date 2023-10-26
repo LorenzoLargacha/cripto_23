@@ -35,7 +35,7 @@ class RegistroMedico:
             raise ExcepcionesGestor("Objeto RegistroMedico no encontrado")
         # Ponemos el freeze_time a cuando el paciente fue registrado para mantener el time_stamp
         freezer = freeze_time(
-            datetime.fromtimestamp(medico_encontrado["_RegistroMedico__time_stamp"]).date())
+            datetime.utcfromtimestamp(medico_encontrado["_RegistroMedico__time_stamp"]))
         freezer.start()
         medico = cls(medico_encontrado["_RegistroMedico__id_medico"],
                      medico_encontrado["_RegistroMedico__nombre_completo"],
@@ -47,6 +47,11 @@ class RegistroMedico:
         for item in lista_citas:
             medico.registrar_cita_medico(item)
         return medico
+
+    def actualizar_medico_store(self) -> None:
+        """Modifica el médico en store_medicos"""
+        store_medicos = MedicoJsonStore()
+        store_medicos.update_item(self, self.__id_medico)
 
     @property
     def id_medico(self):

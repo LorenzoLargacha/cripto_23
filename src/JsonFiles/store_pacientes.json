@@ -4,7 +4,7 @@
     "_RegistroPaciente__nombre_completo": "Pedro Hernandez Bernaldo",
     "_RegistroPaciente__telefono": "+34111555888",
     "_RegistroPaciente__edad": "22",
-    "_RegistroPaciente__time_stamp": 1698339233.843421,
+    "_RegistroPaciente__time_stamp": 1698354879.425661,
     "_RegistroPaciente__mis_citas": []
   },
   {
@@ -12,11 +12,20 @@
     "_RegistroPaciente__nombre_completo": "Lorenzo Largacha Sanz",
     "_RegistroPaciente__telefono": "+34666888166",
     "_RegistroPaciente__edad": "22",
-    "_RegistroPaciente__time_stamp": 1698278400.0,
+    "_RegistroPaciente__time_stamp": 1698354879.226888,
     "_RegistroPaciente__mis_citas": [
-      "eb8d55c46e8994e1dfdffc9d98898e325abc59de5b2f83831419c13a3a042fa1",
-      "f68fe29123f1f24e254bf0ed523c7411f1ce3bb07e301cfcc5deeede03ff940c",
-      "09e939a0e9786d7b6d9c70658cd244bdaddb4145b6f90e214876fd83f6b4ce6d"
+      {
+        "_CitaMedica__identificador_cita": "0ca92528d6adfbf9d19d6c2728fcc1204faf6bc10e129eaf834571faaab45a98",
+        "_CitaMedica__fecha_hora": "2023-10-31 14:30:00",
+        "_CitaMedica__id_medico": "76281872A",
+        "_CitaMedica__especialidad": "Atencion Primaria"
+      },
+      {
+        "_CitaMedica__identificador_cita": "2a328b32039419676e3188981b646fb248d1799665ae5c2bef21aa5bc2318de3",
+        "_CitaMedica__fecha_hora": "2023-10-31 16:00:00",
+        "_CitaMedica__id_medico": "92213124Y",
+        "_CitaMedica__especialidad": "Odontologia"
+      }
     ]
   }
 ]

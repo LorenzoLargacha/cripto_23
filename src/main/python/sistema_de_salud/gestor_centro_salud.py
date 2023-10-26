@@ -29,6 +29,8 @@ class GestorCentroSalud:
     KEY_LABEL_CITA_FECHA =  "_CitaMedica__fecha_hora"
     KEY_LABEL_CITA_PACIENTE = "_CitaMedica__id_paciente"
     KEY_LABEL_CITA_MOTIVO = "_CitaMedica__motivo_consulta"
+    KEY_LABEL_CITA_MEDICO = "_CitaMedica__id_medico"
+    KEY_LABEL_CITA_ESPECIALIDAD = "_CitaMedica__especialidad"
 
     def __init__(self):
         pass
@@ -105,8 +107,21 @@ class GestorCentroSalud:
         print("Enviando cita al médico...")
         confirmacion_encriptada = self.enviar_cita(token, key, id_medico)
         # Recibimos la confirmación y la desencriptamos
-        cita_confirmada = self.recibir_confirmacion(confirmacion_encriptada, key, id_paciente)
-        if cita_confirmada is True:
+        id_cita_confirmada = self.recibir_confirmacion(confirmacion_encriptada, key, id_paciente)
+        if id_cita_confirmada == cita.identificador_cita:
+            # Guardamos la información de la cita en la lista mis_citas del paciente
+            paciente = RegistroPaciente.obtener_paciente(id_paciente)
+            info_cita = {
+                self.KEY_LABEL_CITA_ID: cita.identificador_cita,
+                self.KEY_LABEL_CITA_FECHA: cita.fecha_hora.strftime("%Y-%m-%d %H:%M:%S"),
+                self.KEY_LABEL_CITA_MEDICO: cita.id_medico,
+                self.KEY_LABEL_CITA_ESPECIALIDAD: cita.especialidad
+            }
+            paciente.registrar_cita_paciente(info_cita)
+            # Actualizamos el paciente en el fichero JSON
+            store_pacientes = PacienteJsonStore()
+            store_pacientes.update_item(paciente, paciente.id_paciente)
+            # Guardamos la cita en el fichero store_citas
             store_citas = CitaJsonStore()
             store_citas.guardar_cita_store(cita)
         return cita
@@ -145,13 +160,7 @@ class GestorCentroSalud:
         f = Fernet(key)
         bytes_data = f.decrypt(token)
         identificador_cita = bytes_data.decode('utf-8')
-        # Guardamos el identificador de la cita en la lista mis_citas del paciente
-        paciente = RegistroPaciente.obtener_paciente(id_paciente)
-        paciente.registrar_cita_paciente(identificador_cita)
-        # Actualizamos el paciente en el fichero JSON
-        store_pacientes = PacienteJsonStore()
-        store_pacientes.update_item(paciente, paciente.id_paciente)
-        return True
+        return identificador_cita
 
     def autenticacion_paciente(self, id_paciente: str, password: str):
         """Autentica a un paciente"""
@@ -235,7 +244,7 @@ class GestorCentroSalud:
         print("Inicio de sesión fallido. Volviendo al inicio...")
         return None
 
-    def pedir_cita(self, paciente: RegistroPaciente):
+    def pedir_cita(self, id_paciente: str):
         """Solicitar una cita médica"""
         print("\nSOLICITUD CITA")
         while True:
@@ -278,7 +287,7 @@ class GestorCentroSalud:
                     for item in lista_citas:
                         print(item["_CitaMedica__fecha_hora"] + " - " + medico.nombre_completo + " - " + item["_CitaMedica__especialidad"] + " -> Ocupado")
                 print("\nTodas las horas estás libres para la fecha introducida ")
-                hora_str = input("\nIntroduzca una hora libre (HH:MM): ")
+                hora_str = input("\nIntroduzca una hora disponible (HH:MM): ")
                 fecha_hora_str = fecha_str + " " + hora_str + ":00"  # YYYY-MM-DD HH:MM:SS
 
                 # Consultar si la fecha_hora introducida está libre
@@ -288,6 +297,7 @@ class GestorCentroSalud:
                     fecha_hora = datetime.strptime(fecha_hora_str, "%Y-%m-%d %H:%M:%S")
                     motivo_consulta = input("\nIntroduzca el motivo de la consulta: ")
                     # Iniciamos el registro de la cita
+                    paciente = RegistroPaciente.obtener_paciente(id_paciente)
                     cita = self.registro_cita(medico.id_medico, medico.especialidad, fecha_hora, paciente.id_paciente, paciente.telefono, motivo_consulta)
                     print("\nCita reservada con éxito")
                     print(cita.mostrar_info_publica())
@@ -320,26 +330,83 @@ class GestorCentroSalud:
                 break
         return
 
+    def cancelar_cita(self, id_paciente: str):
+        """Cancelar una cita médica"""
+        print("\nDatos de la cita que quiere cancelar:\n")
+        # Obtenemos la fecha_hora de la cita a borrar
+        fecha_str = input("\nIntroduzca la fecha su cita (YYYY-MM-DD): ")
+        hora_str = input("Introduzca la hora de su cita (HH:MM): ")
+        fecha_hora_str = fecha_str + " " + hora_str + ":00"  # YYYY-MM-DD HH:MM:SS
+        # Buscamos la cita en mis_citas del paciente y la borramos
+        paciente = RegistroPaciente.obtener_paciente(id_paciente)
+        lista_citas_paciente = paciente.mis_citas
+        cita_dict = None
+        for item in lista_citas_paciente:
+            if item[self.KEY_LABEL_CITA_FECHA] == fecha_hora_str:
+                cita_dict = item
+                break
+        if cita_dict is None:
+            print("\nCita no encontrada")
+            return
+        identificador_cita = cita_dict[self.KEY_LABEL_CITA_ID]
+        id_medico = cita_dict[self.KEY_LABEL_CITA_MEDICO]
+        paciente.borrar_cita_paciente(cita_dict)
+        # Actualizamos el paciente en el fichero JSON
+        paciente.actualizar_paciente_store()
+
+        # Buscamos la cita en mis_citas del médico y la borramos
+        medico = RegistroMedico.obtener_medico(id_medico)
+        lista_citas_medico = medico.mis_citas
+        for item in lista_citas_medico:
+            if item[self.KEY_LABEL_CITA_ID] == identificador_cita:
+                medico.borrar_cita_medico(item)
+        # Actualizamos el médico en el fichero JSON
+        medico.actualizar_medico_store()
+
+        # Cambiamos el estado de la cita a Cancelada
+        cita = CitaMedica.obtener_cita(identificador_cita)
+        cita.modificar_estado_cita()
+        cita.actualizar_cita_store()
+        print("\nCita cancelada")
+
+    def consultar_citas_paciente(self, id_paciente: str):
+        """Imprime las citas que tiene el paciente"""
+        print("\nMis citas:")
+        paciente = RegistroPaciente.obtener_paciente(id_paciente)
+        lista_citas_paciente = paciente.mis_citas
+        for item in lista_citas_paciente:
+            print("CITA: Fecha: " + item[self.KEY_LABEL_CITA_FECHA] + ", Medico: " + item[self.KEY_LABEL_CITA_MEDICO] + ", Especialidad: " + item[self.KEY_LABEL_CITA_ESPECIALIDAD])
+
+    def consultar_citas_medico(self, id_medico: str):
+        """Imprime las citas que tiene el médico"""
+        print("\nMis citas:")
+        medico = RegistroMedico.obtener_medico(id_medico)
+        lista_citas_medico = medico.mis_citas
+        for item in lista_citas_medico:
+            print("CITA: Fecha: " + item[self.KEY_LABEL_CITA_FECHA] + ", Paciente: " + item[self.KEY_LABEL_CITA_PACIENTE] + ", Motivo Consulta: " + item[self.KEY_LABEL_CITA_MOTIVO])
+
     def interfaz_paciente(self, paciente: RegistroPaciente):
         # Interfaz paciente
         print("\nINTERFAZ PACIENTE")
         while True:
             print("\nOpciones disponibles:")
             print("1. Pedir cita")
-            print("2. Anular cita")
+            print("2. Cancelar cita")
             print("3. Consultar mis citas")
             print("4. Cerrar sesión")
             opcion = input("Indique una opción (1/2/3/4): ")
 
             if opcion == "1":
-                self.pedir_cita(paciente)
+                self.pedir_cita(paciente.id_paciente)
                 print("\nINTERFAZ PACIENTE")
                 continue
             elif opcion == "2":
-                # anular_cita(paciente)
+                self.cancelar_cita(paciente.id_paciente)
+                print("\nINTERFAZ PACIENTE")
                 continue
             elif opcion == "3":
-                # consultar_citas(paciente)
+                self.consultar_citas_paciente(paciente.id_paciente)
+                print("\nINTERFAZ PACIENTE")
                 continue
             elif opcion == "4":
                 print("\nCerrando sesión...")
@@ -347,7 +414,7 @@ class GestorCentroSalud:
             else:
                 print("Opción no válida. Inténtelo de nuevo.")
 
-    def interfaz_medico(self, medico: object):
+    def interfaz_medico(self, medico: RegistroMedico):
         # Interfaz medico
         print("\nINTERFAZ MÉDICO")
         while True:
@@ -357,7 +424,7 @@ class GestorCentroSalud:
             opcion = input("Indique una opción (1/2): ")
 
             if opcion == "1":
-                # consultar citas
+                self.consultar_citas_medico(medico.id_medico)
                 continue
             elif opcion == "2":
                 print("\nCerrando sesión...")

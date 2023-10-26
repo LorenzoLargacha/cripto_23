@@ -6,8 +6,19 @@
     "_CitaMedica__id_paciente": "54026189V",
     "_CitaMedica__telefono_paciente": "+34666888166",
     "_CitaMedica__motivo_consulta": "Dolor de cabeza",
-    "_CitaMedica__issued_at": 1698339234.742546,
-    "_CitaMedica__identificador_cita": "eb8d55c46e8994e1dfdffc9d98898e325abc59de5b2f83831419c13a3a042fa1",
+    "_CitaMedica__issued_at": 1698354880.331467,
+    "_CitaMedica__identificador_cita": "0ca92528d6adfbf9d19d6c2728fcc1204faf6bc10e129eaf834571faaab45a98",
+    "_CitaMedica__estado_cita": "Activa"
+  },
+  {
+    "_CitaMedica__id_medico": "92213124Y",
+    "_CitaMedica__especialidad": "Odontologia",
+    "_CitaMedica__fecha_hora": "2023-10-31 16:00:00",
+    "_CitaMedica__id_paciente": "54026189V",
+    "_CitaMedica__telefono_paciente": "+34666888166",
+    "_CitaMedica__motivo_consulta": "Caries",
+    "_CitaMedica__issued_at": 1698354936.933577,
+    "_CitaMedica__identificador_cita": "2a328b32039419676e3188981b646fb248d1799665ae5c2bef21aa5bc2318de3",
     "_CitaMedica__estado_cita": "Activa"
   },
   {
@@ -16,20 +27,9 @@
     "_CitaMedica__fecha_hora": "2023-10-31 15:00:00",
     "_CitaMedica__id_paciente": "54026189V",
     "_CitaMedica__telefono_paciente": "+34666888166",
-    "_CitaMedica__motivo_consulta": "Me duele el pie",
-    "_CitaMedica__issued_at": 1698339310.886138,
-    "_CitaMedica__identificador_cita": "f68fe29123f1f24e254bf0ed523c7411f1ce3bb07e301cfcc5deeede03ff940c",
-    "_CitaMedica__estado_cita": "Activa"
-  },
-  {
-    "_CitaMedica__id_medico": "92213124Y",
-    "_CitaMedica__especialidad": "Odontologia",
-    "_CitaMedica__fecha_hora": "2023-11-01 16:00:00",
-    "_CitaMedica__id_paciente": "54026189V",
-    "_CitaMedica__telefono_paciente": "+34666888166",
-    "_CitaMedica__motivo_consulta": "Caries",
-    "_CitaMedica__issued_at": 1698339350.817164,
-    "_CitaMedica__identificador_cita": "09e939a0e9786d7b6d9c70658cd244bdaddb4145b6f90e214876fd83f6b4ce6d",
-    "_CitaMedica__estado_cita": "Activa"
+    "_CitaMedica__motivo_consulta": "Dolor en el pie",
+    "_CitaMedica__issued_at": 1698354911.072611,
+    "_CitaMedica__identificador_cita": "d42ca938999be6cc298fd254e4feb1bae251f8641e35012cb84159f3ae979a20",
+    "_CitaMedica__estado_cita": "Cancelada"
   }
 ]
