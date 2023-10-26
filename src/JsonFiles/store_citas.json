@@ -6,8 +6,8 @@
     "_CitaMedica__id_paciente": "54026189V",
     "_CitaMedica__telefono_paciente": "+34666888166",
     "_CitaMedica__motivo_consulta": "Dolor de cabeza",
-    "_CitaMedica__issued_at": 1698331096.270659,
-    "_CitaMedica__identificador_cita": "ed765a3a187687ee7ee005527cba38ab8a5f06f49a8a0d365ccbbaa546fcfdd7",
+    "_CitaMedica__issued_at": 1698335293.069669,
+    "_CitaMedica__identificador_cita": "e6f998d8f1922bc9dba069534cd0c14520e6e4981a81f77cf7e7b689be833766",
     "_CitaMedica__estado_cita": "Activa"
   },
   {
@@ -16,9 +16,9 @@
     "_CitaMedica__fecha_hora": "2023-10-31 15:00:00",
     "_CitaMedica__id_paciente": "54026189V",
     "_CitaMedica__telefono_paciente": "+34666888166",
-    "_CitaMedica__motivo_consulta": "Me",
-    "_CitaMedica__issued_at": 1698331122.697827,
-    "_CitaMedica__identificador_cita": "6a665435335ef206d6f96cea47de9ebd4edb9f4493e05613fb7c8ce6009515a2",
+    "_CitaMedica__motivo_consulta": "Pie",
+    "_CitaMedica__issued_at": 1698335321.330543,
+    "_CitaMedica__identificador_cita": "add07b20bae1587e8991c8f0b62c630c0d0a43ecbc908d18f4e336242f371792",
     "_CitaMedica__estado_cita": "Activa"
   }
 ]

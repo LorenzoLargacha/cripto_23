@@ -16,6 +16,7 @@ from sistema_de_salud.cfg.gestor_centro_salud_config import JSON_FILES_PATH
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.fernet import Fernet
 
 #from cryptography.hazmat.primitives.asymmetric import rsa, padding
 #from cryptography.hazmat.primitives import serialization
@@ -91,16 +92,50 @@ class GestorCentroSalud:
         """Registra una cita médica"""
         cita = CitaMedica(id_medico, especialidad, fecha_hora, id_paciente, telefono_paciente, motivo_consulta)
 
-        # Encriptar (cifrado simétrico),
-        # Enviar al médico
+        # Cifrado simétrico
+        print("\nGenerando clave simétrica...")
+        key = Fernet.generate_key()
+        # Asumimos que la clave se transmite entre paciente y médico mediante un sistema asimétrico
+        # Encriptamos la cita con Fernet
+        print("Encriptando cita...")
+        f = Fernet(key)
+        bytes_data = json.dumps(cita.__dict__).encode('utf-8')  # serializamos la cita como un string y lo convertimos a bytes
+        token = f.encrypt(bytes_data)                           # obtenemos los datos encriptados como un token
+        # Enviamos la cita encriptada al médico
+        print("Enviando cita al médico...")
+        confirmacion_encriptada = self.enviar_cita(token, key, id_medico)
         # Recibir confirmación y desencriptarla
+        cita_confirmada = self.recibir_confirmacion(confirmacion_encriptada, key, id_paciente)
 
-        store_citas = CitaJsonStore()
-        registro_cita = store_citas.guardar_cita_store(cita)
+        if cita_confirmada is True:
+            store_citas = CitaJsonStore()
+            store_citas.guardar_cita_store(cita)
+        return cita
 
-        # Solo si la cita es registrada correctamente (y no estaba registrada antes)
-        if registro_cita is True:
-            return cita
+    def enviar_cita(self, token, key, id_medico):
+        # Desencriptamos la cita con Fernet
+        print("Desencriptando cita...")
+        f = Fernet(key)
+        bytes_data = f.decrypt(token)
+        cita_dict = json.loads(bytes_data.decode('utf-8'))
+        # guardar en mis_citas del médico
+
+        # mandar mensaje de confirmación
+        identificador_cita = cita_dict["_CitaMedica__identificador_cita"]
+        confirmacion_encriptada = f.encrypt(identificador_cita.encode('utf-8'))
+        # Devolvemos la confirmación
+        print("Devolviendo confirmación al paciente...")
+        return confirmacion_encriptada
+
+    def recibir_confirmacion(self, token, key, id_paciente):
+        # Desencriptamos la confirmación con Fernet
+        print("Desencriptando confirmación...")
+        f = Fernet(key)
+        bytes_data = f.decrypt(token)
+        identificador_cita = bytes_data.decode('utf-8')
+        # guardar en mis_citas del paciente
+
+        return True
 
     def autenticacion_paciente(self, id_paciente: str, password: str):
         """Autentica a un paciente"""
