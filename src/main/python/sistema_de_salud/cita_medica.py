@@ -2,7 +2,10 @@
 import hashlib
 import json
 from datetime import datetime
+from freezegun import freeze_time
 
+from sistema_de_salud.storage.cita_json_store import CitaJsonStore
+from sistema_de_salud.exception.excepciones_gestor import ExcepcionesGestor
 
 class CitaMedica:
     """Clase que representa una cita médica de un paciente"""
@@ -15,21 +18,44 @@ class CitaMedica:
         self.__id_paciente = id_paciente
         self.__telefono_paciente = telefono_paciente
         self.__motivo_consulta = motivo_consulta
+        justnow = datetime.utcnow()
+        self.__issued_at = datetime.timestamp(justnow)
         self.__identificador_cita = self.firma_cita
         self.__estado_cita = estado_cita
 
     def __str__(self):
         return "CitaMedica:" + json.dumps(self.__dict__)
 
+    @classmethod
+    def obtener_cita(cls, identificador_cita):
+        """Devuelve el objeto CitaMedica para el identificador_cita recibido"""
+        store_citas = CitaJsonStore()
+        cita_encontrada = store_citas.buscar_cita_store(identificador_cita)
+        if cita_encontrada is None:
+            raise ExcepcionesGestor("Objeto CitaMedica no encontrado")
+        # *** Cuando cifremos con clave pública habrá que descifrar cita_encontrada ***
+        # Ponemos el freeze_time a cuando la cita fue registrada para mantener el time_stamp
+        freezer = freeze_time(
+            datetime.fromtimestamp(cita_encontrada["_CitaMedica__issued_at"]).date())
+        freezer.start()
+        cita = cls(cita_encontrada["_CitaMedica__id_medico"],
+                   cita_encontrada["_CitaMedica__especialidad"],
+                   cita_encontrada["_CitaMedica__fecha_hora"],
+                   cita_encontrada["_CitaMedica__id_paciente"],
+                   cita_encontrada["_CitaMedica__telefono_paciente"],
+                   cita_encontrada["_CitaMedica__motivo_consulta"])
+        freezer.stop()
+        return cita
+
     def __firma_string(self) -> str:
         """Crea el string utilizado para generar el identificador de la cita"""
         return "{id_medico:" + self.__id_medico + ",especialidad:" + self.__especialidad + ",fecha_hora:" + \
                self.__fecha_hora + ",id_paciente:" + self.__id_paciente + \
-               ",motivo_consulta:" + self.__motivo_consulta + "}"
+               ",motivo_consulta:" + self.__motivo_consulta + ",issuedate:" + self.__issued_at.__str__() + "}"
 
     def mostrar_info_publica(self) -> str:
         """Devuleve la información pública de la cita como un string"""
-        return f"CITA: Fecha: {self.fecha_hora} Medico: {self.id_medico} Especialidad: {self.especialidad}"
+        return f"CITA: Fecha: {self.fecha_hora}, Medico: {self.id_medico}, Especialidad: {self.especialidad}"
 
     @property
     def id_medico(self):

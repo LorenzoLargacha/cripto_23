@@ -87,7 +87,7 @@ class GestorCentroSalud:
             store_credenciales.guardar_credenciales_store(usuario)
         return medico.id_medico
 
-    def registro_cita(self, id_medico: str, especialidad: str, fecha_hora, id_paciente: str, telefono_paciente: str, motivo_consulta: str) -> str:
+    def registro_cita(self, id_medico: str, especialidad: str, fecha_hora, id_paciente: str, telefono_paciente: str, motivo_consulta: str):
         """Registra una cita médica"""
         cita = CitaMedica(id_medico, especialidad, fecha_hora, id_paciente, telefono_paciente, motivo_consulta)
 
@@ -100,7 +100,7 @@ class GestorCentroSalud:
 
         # Solo si la cita es registrada correctamente (y no estaba registrada antes)
         if registro_cita is True:
-            return cita.identificador_cita
+            return cita
 
     def autenticacion_paciente(self, id_paciente: str, password: str):
         """Autentica a un paciente"""
@@ -156,7 +156,7 @@ class GestorCentroSalud:
             return 2
         return 0
 
-    def autenticacion_usuarios(self, tipo_usuario: str) -> bool:
+    def autenticacion_usuarios(self, tipo_usuario: str):
         """Interfaz de autenticación de usuarios"""
         print("\nINICIO DE SESIÓN\n")
         for i in range(3):
@@ -170,20 +170,25 @@ class GestorCentroSalud:
             if autenticacion == 1:
                 # usuario no registrado
                 print("\nInicio de sesión fallido. Volviendo al inicio...")
-                return False
+                return None
             elif autenticacion == 2:
                 # usuario registrado, contraseña incorrecta
                 continue
             else:
                 print("Autenticación exitosa\n")
-                return True
+                if tipo_usuario == "paciente":
+                    usuario = RegistroPaciente.obtener_paciente(id_usuario)
+                elif tipo_usuario == "medico":
+                    usuario = RegistroMedico.obtener_medico(id_usuario)
+                return usuario
         print("Inicio de sesión fallido. Volviendo al inicio...")
-        return False
+        return None
 
-    def pedir_cita(self):
+    def pedir_cita(self, paciente: RegistroPaciente):
         """Solicitar una cita médica"""
         print("\nSOLICITUD CITA")
         while True:
+            cancelar = False
             print("\nCon qué médico desea pedir cita:")
             print("1. Manuel Fernandez Gil - Atención Primaria")
             print("2. Isabel Gómez Rivas - Pediatría")
@@ -206,20 +211,65 @@ class GestorCentroSalud:
             else:
                 print("Opción no válida. Inténtelo de nuevo.")
                 continue
-            # YYYY-MM-DD HH:MM:SS
-            fecha_str = input("\nIntroduzca una fecha (YYYY-MM-DD): ")
 
-            # consultar disponibilidad
+            while True:
+                cambiarMedico = False
+                medico = RegistroMedico.obtener_medico(id_medico)
 
-            hora_str = input("\nIntroduzca una hora (HH:MM): ")
+                fecha_str = input("\nIntroduzca una fecha (YYYY-MM-DD): ")
+                fecha_hora_str = fecha_str + " " + "00:00:00"
 
-            fecha_hora_str = fecha_str + " " + hora_str + ":00"
-            # Convert the string to a datetime object
-            fecha_hora = datetime.strptime(fecha_hora_str, "%Y-%m-%d %H:%M:%S")
-            break
-            # self.registro_cita()
+                # Mostrar citas ocupadas para ese médico en esa fecha
+                store_citas = CitaJsonStore()
+                lista_citas = store_citas.buscar_citas_medico_fecha_store(medico.id_medico, fecha_hora_str)
+                if lista_citas:
+                    print("\nHoras ocupadas para la fecha introducida: ")
+                    for item in lista_citas:
+                        print(item["_CitaMedica__fecha_hora"] + " - " + medico.nombre_completo + " - " + item["_CitaMedica__especialidad"] + "-> Ocupado")
+                print("\nTodas las horas libres para la fecha introducida ")
+                hora_str = input("\nIntroduzca una hora libre (HH:MM): ")
+                fecha_hora_str = fecha_str + " " + hora_str + ":00"  # YYYY-MM-DD HH:MM:SS
 
-    def interfaz_paciente(self):
+                # Consultar si la fecha_hora introducida está libre
+                item = store_citas.buscar_cita_fecha_hora_store(fecha_hora_str)
+                if item is None:
+                    # Convert the string to a datetime object
+                    fecha_hora = datetime.strptime(fecha_hora_str, "%Y-%m-%d %H:%M:%S")
+                    motivo_consulta = input("\nIntroduzca el motivo de la consulta: ")
+                    # Iniciamos el registro de la cita
+                    cita = self.registro_cita(medico.id_medico, medico.especialidad, fecha_hora, paciente.id_paciente, paciente.telefono, motivo_consulta)
+                    print("\nCita reservada con éxito")
+                    print(cita.mostrar_info_publica())
+                    return
+
+                # Si la fecha no está libre
+                print("\nCita no disponible\n")
+                while True:
+                    print("1. Cambiar fecha")
+                    print("2. Cambiar médico")
+                    print("3. Cancelar")
+                    opcion = input("Indique una opción (1/2/3): ")
+                    if opcion == "1":
+                        break
+                    elif opcion == "2":
+                        cambiarMedico = True
+                        break
+                    elif opcion == "3":
+                        cambiarMedico = True
+                        cancelar = True
+                        print("\nCancelando solicitud...")
+                        break
+                    else:
+                        print("Opción no válida. Inténtelo de nuevo.")
+                        continue
+                    break
+                if cambiarMedico is True:
+                    break
+            if cancelar is True:
+                break
+        return
+
+    def interfaz_paciente(self, paciente: RegistroPaciente):
         # Interfaz paciente
         print("\nINTERFAZ PACIENTE")
         while True:
@@ -231,13 +281,14 @@ class GestorCentroSalud:
             opcion = input("Indique una opción (1/2/3/4): ")
 
             if opcion == "1":
-                self.pedir_cita()
+                self.pedir_cita(paciente)
+                print("\nINTERFAZ PACIENTE")
                 continue
             elif opcion == "2":
-                # anular_cita()
+                # anular_cita(paciente)
                 continue
             elif opcion == "3":
-                # consultar_citas()
+                # consultar_citas(paciente)
                 continue
             elif opcion == "4":
                 print("\nCerrando sesión...")
@@ -245,7 +296,7 @@ class GestorCentroSalud:
             else:
                 print("Opción no válida. Inténtelo de nuevo.")
 
-    def interfaz_medico(self):
+    def interfaz_medico(self, medico: object):
         # Interfaz medico
         print("\nINTERFAZ MÉDICO")
         while True:
@@ -320,14 +371,16 @@ class GestorCentroSalud:
 
             if opcion == "1":
                 tipo_usuario = "paciente"
-                if not self.autenticacion_usuarios(tipo_usuario):
+                usuario = self.autenticacion_usuarios(tipo_usuario)
+                if usuario is None:
                     continue
-                self.interfaz_paciente()
+                self.interfaz_paciente(usuario)
             elif opcion == "2":
                 tipo_usuario = "medico"
-                if not self.autenticacion_usuarios(tipo_usuario):
+                usuario = self.autenticacion_usuarios(tipo_usuario)
+                if usuario is None:
                     continue
-                self.interfaz_medico()
+                self.interfaz_medico(usuario)
             elif opcion == "3":
                 # Acceso Administrador
                 break

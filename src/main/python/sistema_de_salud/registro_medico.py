@@ -2,7 +2,10 @@
 import hashlib
 import json
 from datetime import datetime
+from freezegun import freeze_time
 
+from sistema_de_salud.storage.medico_json_store import MedicoJsonStore
+from sistema_de_salud.exception.excepciones_gestor import ExcepcionesGestor
 
 class RegistroMedico:
     """Clase que representa el registro de un nuevo médico en el sistema"""
@@ -25,6 +28,25 @@ class RegistroMedico:
 
     def __str__(self):
         return "RegistroMedico:" + json.dumps(self.__dict__)
+
+    @classmethod
+    def obtener_medico(cls, id_medico):
+        """Devuelve el objeto RegistroMedico para el id_medico recibido"""
+        store_medicos = MedicoJsonStore()
+        medico_encontrado = store_medicos.buscar_medico_store(id_medico)
+        if medico_encontrado is None:
+            raise ExcepcionesGestor("Objeto RegistroMedico no encontrado")
+        # Ponemos el freeze_time a cuando el paciente fue registrado para mantener el time_stamp
+        freezer = freeze_time(
+            datetime.fromtimestamp(medico_encontrado["_RegistroMedico__time_stamp"]).date())
+        freezer.start()
+        medico = cls(medico_encontrado["_RegistroMedico__id_medico"],
+                     medico_encontrado["_RegistroMedico__nombre_completo"],
+                     medico_encontrado["_RegistroMedico__telefono"],
+                     medico_encontrado["_RegistroMedico__edad"],
+                     medico_encontrado["_RegistroMedico__especialidad"])
+        freezer.stop()
+        return medico
 
     @property
     def id_medico(self):
