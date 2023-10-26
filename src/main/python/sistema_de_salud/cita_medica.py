@@ -4,6 +4,7 @@ import json
 from datetime import datetime
 from freezegun import freeze_time
 
+from sistema_de_salud.registro_medico import RegistroMedico
 from sistema_de_salud.storage.cita_json_store import CitaJsonStore
 from sistema_de_salud.exception.excepciones_gestor import ExcepcionesGestor
 
@@ -55,7 +56,8 @@ class CitaMedica:
 
     def mostrar_info_publica(self) -> str:
         """Devuleve la información pública de la cita como un string"""
-        return f"CITA: Fecha: {self.fecha_hora}, Medico: {self.id_medico}, Especialidad: {self.especialidad}"
+        medico = RegistroMedico.obtener_medico(self.id_medico)
+        return f"CITA: Fecha: {self.fecha_hora}, Medico: {medico.nombre_completo}, Especialidad: {self.especialidad}"
 
     def modificar_estado_cita(self) -> None:
         """Modifica el estado de la cita en el objeto CitaMedica"""

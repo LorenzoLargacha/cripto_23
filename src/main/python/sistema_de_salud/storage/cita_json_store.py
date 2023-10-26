@@ -14,6 +14,7 @@ class CitaJsonStore(JsonStore):
         _ID_FIELD = "_CitaMedica__identificador_cita"
         __MEDICO_FIELD = "_CitaMedica__id_medico"
         __FECHA_FIELD = "_CitaMedica__fecha_hora"
+        __ESTADO_FIELD = "_CitaMedica__estado_cita"
 
         __ERROR_MESSAGE_INVALID_OBJECT = "Objeto CitaMedica invalido"
         __ERROR_MESSAGE_ID_REGISTRADO = "Cita ya registrada"
@@ -58,7 +59,7 @@ class CitaJsonStore(JsonStore):
                 return None
             return item_found
 
-        def buscar_citas_medico_fecha_store(self, id_medico: str, fecha_hora_str: str) -> list:
+        def buscar_citas_activas_medico_fecha_store(self, id_medico: str, fecha_hora_str: str) -> list:
             """Busca todas las citas de un médico para una fecha en store_citas"""
             items_found = self.find_items_list(id_medico, self.__MEDICO_FIELD)
             if not items_found:
@@ -66,13 +67,30 @@ class CitaJsonStore(JsonStore):
                 return items_found
             lista_citas = []
             for item in items_found:
-                # Convertimos la fecha y hora a objeto datetime
-                fecha_hora_item = datetime.strptime(item[self.__FECHA_FIELD], "%Y-%m-%d %H:%M:%S")
-                fecha_item = (fecha_hora_item.year, fecha_hora_item.month, fecha_hora_item.day)
-                fecha_hora_solicitada = datetime.strptime(fecha_hora_str, "%Y-%m-%d %H:%M:%S")
-                fecha_solicitada = (fecha_hora_solicitada.year, fecha_hora_solicitada.month, fecha_hora_solicitada.day)
-                if fecha_item == fecha_solicitada:
-                    lista_citas.append(item)
+                if item[self.__ESTADO_FIELD] == "Activa":
+                    # Convertimos la fecha y hora a objeto datetime
+                    fecha_hora_item = datetime.strptime(item[self.__FECHA_FIELD], "%Y-%m-%d %H:%M:%S")
+                    fecha_item = (fecha_hora_item.year, fecha_hora_item.month, fecha_hora_item.day)
+                    fecha_hora_solicitada = datetime.strptime(fecha_hora_str, "%Y-%m-%d %H:%M:%S")
+                    fecha_solicitada = (fecha_hora_solicitada.year, fecha_hora_solicitada.month, fecha_hora_solicitada.day)
+                    if fecha_item == fecha_solicitada:
+                        lista_citas.append(item)
+            return lista_citas
+
+        def buscar_citas_activas_medico_fecha_hora_store(self, id_medico: str, fecha_hora_str: str) -> list:
+            """Busca todas las citas de un médico para una fecha_hora en store_citas"""
+            items_found = self.find_items_list(id_medico, self.__MEDICO_FIELD)
+            if not items_found:
+                # si la lista está vacía
+                return items_found
+            lista_citas = []
+            for item in items_found:
+                if item[self.__ESTADO_FIELD] == "Activa":
+                    # Convertimos la fecha y hora a objeto datetime
+                    fecha_hora_item = datetime.strptime(item[self.__FECHA_FIELD], "%Y-%m-%d %H:%M:%S")
+                    fecha_hora_solicitada = datetime.strptime(fecha_hora_str, "%Y-%m-%d %H:%M:%S")
+                    if fecha_hora_item == fecha_hora_solicitada:
+                        lista_citas.append(item)
             return lista_citas
 
     __instance = None

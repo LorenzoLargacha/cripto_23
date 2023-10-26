@@ -6,19 +6,8 @@
     "_CitaMedica__id_paciente": "54026189V",
     "_CitaMedica__telefono_paciente": "+34666888166",
     "_CitaMedica__motivo_consulta": "Dolor de cabeza",
-    "_CitaMedica__issued_at": 1698354880.331467,
-    "_CitaMedica__identificador_cita": "0ca92528d6adfbf9d19d6c2728fcc1204faf6bc10e129eaf834571faaab45a98",
-    "_CitaMedica__estado_cita": "Activa"
-  },
-  {
-    "_CitaMedica__id_medico": "92213124Y",
-    "_CitaMedica__especialidad": "Odontologia",
-    "_CitaMedica__fecha_hora": "2023-10-31 16:00:00",
-    "_CitaMedica__id_paciente": "54026189V",
-    "_CitaMedica__telefono_paciente": "+34666888166",
-    "_CitaMedica__motivo_consulta": "Caries",
-    "_CitaMedica__issued_at": 1698354936.933577,
-    "_CitaMedica__identificador_cita": "2a328b32039419676e3188981b646fb248d1799665ae5c2bef21aa5bc2318de3",
+    "_CitaMedica__issued_at": 1698357183.26182,
+    "_CitaMedica__identificador_cita": "d217de1563a70cbc2b25fc0452441d36b94803f081fa55e51350d23ebad76c08",
     "_CitaMedica__estado_cita": "Activa"
   },
   {
@@ -28,8 +17,30 @@
     "_CitaMedica__id_paciente": "54026189V",
     "_CitaMedica__telefono_paciente": "+34666888166",
     "_CitaMedica__motivo_consulta": "Dolor en el pie",
-    "_CitaMedica__issued_at": 1698354911.072611,
-    "_CitaMedica__identificador_cita": "d42ca938999be6cc298fd254e4feb1bae251f8641e35012cb84159f3ae979a20",
+    "_CitaMedica__issued_at": 1698357238.897846,
+    "_CitaMedica__identificador_cita": "47fb4ba7fca88ffd180898f691bb55f78dfa9e561f66f9b87c4382d7c251ce4f",
+    "_CitaMedica__estado_cita": "Activa"
+  },
+  {
+    "_CitaMedica__id_medico": "92213124Y",
+    "_CitaMedica__especialidad": "Odontologia",
+    "_CitaMedica__fecha_hora": "2023-10-31 15:00:00",
+    "_CitaMedica__id_paciente": "54026189V",
+    "_CitaMedica__telefono_paciente": "+34666888166",
+    "_CitaMedica__motivo_consulta": "Caries",
+    "_CitaMedica__issued_at": 1698357262.202045,
+    "_CitaMedica__identificador_cita": "5788dc634c50a2914055aecd97b54afdae6284f7e3a9cf2126f509958dba4b03",
+    "_CitaMedica__estado_cita": "Activa"
+  },
+  {
+    "_CitaMedica__id_medico": "84202258V",
+    "_CitaMedica__especialidad": "Pediatria",
+    "_CitaMedica__fecha_hora": "2023-11-01 11:00:00",
+    "_CitaMedica__id_paciente": "54026189V",
+    "_CitaMedica__telefono_paciente": "+34666888166",
+    "_CitaMedica__motivo_consulta": "Revision de mi hijo",
+    "_CitaMedica__issued_at": 1698357333.530689,
+    "_CitaMedica__identificador_cita": "a30e14a312a878411f76d504e6ad6779f2729a0febf7d38509cb0140b7e2116a",
     "_CitaMedica__estado_cita": "Cancelada"
   }
 ]

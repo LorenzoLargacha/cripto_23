@@ -281,18 +281,19 @@ class GestorCentroSalud:
 
                 # Mostrar citas ocupadas para ese médico en esa fecha
                 store_citas = CitaJsonStore()
-                lista_citas = store_citas.buscar_citas_medico_fecha_store(medico.id_medico, fecha_hora_str)
+                lista_citas = store_citas.buscar_citas_activas_medico_fecha_store(medico.id_medico, fecha_hora_str)
                 if lista_citas:
                     print("\nHoras ocupadas para la fecha introducida: ")
                     for item in lista_citas:
                         print(item["_CitaMedica__fecha_hora"] + " - " + medico.nombre_completo + " - " + item["_CitaMedica__especialidad"] + " -> Ocupado")
-                print("\nTodas las horas estás libres para la fecha introducida ")
+                else:
+                    print("\nTodas las horas estás libres para la fecha introducida ")
                 hora_str = input("\nIntroduzca una hora disponible (HH:MM): ")
                 fecha_hora_str = fecha_str + " " + hora_str + ":00"  # YYYY-MM-DD HH:MM:SS
 
                 # Consultar si la fecha_hora introducida está libre
-                item = store_citas.buscar_cita_fecha_hora_store(fecha_hora_str)
-                if item is None:
+                item = store_citas.buscar_citas_activas_medico_fecha_hora_store(medico.id_medico, fecha_hora_str)
+                if not item:
                     # Convert the string to a datetime object
                     fecha_hora = datetime.strptime(fecha_hora_str, "%Y-%m-%d %H:%M:%S")
                     motivo_consulta = input("\nIntroduzca el motivo de la consulta: ")
@@ -375,7 +376,8 @@ class GestorCentroSalud:
         paciente = RegistroPaciente.obtener_paciente(id_paciente)
         lista_citas_paciente = paciente.mis_citas
         for item in lista_citas_paciente:
-            print("CITA: Fecha: " + item[self.KEY_LABEL_CITA_FECHA] + ", Medico: " + item[self.KEY_LABEL_CITA_MEDICO] + ", Especialidad: " + item[self.KEY_LABEL_CITA_ESPECIALIDAD])
+            medico = RegistroMedico.obtener_medico(item[self.KEY_LABEL_CITA_MEDICO])
+            print("CITA: Fecha: " + item[self.KEY_LABEL_CITA_FECHA] + ", Medico: " + medico.nombre_completo + ", Especialidad: " + item[self.KEY_LABEL_CITA_ESPECIALIDAD])
 
     def consultar_citas_medico(self, id_medico: str):
         """Imprime las citas que tiene el médico"""
@@ -383,7 +385,8 @@ class GestorCentroSalud:
         medico = RegistroMedico.obtener_medico(id_medico)
         lista_citas_medico = medico.mis_citas
         for item in lista_citas_medico:
-            print("CITA: Fecha: " + item[self.KEY_LABEL_CITA_FECHA] + ", Paciente: " + item[self.KEY_LABEL_CITA_PACIENTE] + ", Motivo Consulta: " + item[self.KEY_LABEL_CITA_MOTIVO])
+            paciente = RegistroPaciente.obtener_paciente(item[self.KEY_LABEL_CITA_PACIENTE])
+            print("CITA: Fecha: " + item[self.KEY_LABEL_CITA_FECHA] + ", Paciente: " + paciente.nombre_completo + ", Motivo Consulta: " + item[self.KEY_LABEL_CITA_MOTIVO])
 
     def interfaz_paciente(self, paciente: RegistroPaciente):
         # Interfaz paciente
