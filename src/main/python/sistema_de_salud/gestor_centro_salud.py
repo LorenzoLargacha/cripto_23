@@ -1,4 +1,4 @@
-"""GestionCitas"""
+"""GestorCentroSalud"""
 import os
 import json
 from datetime import datetime
@@ -11,6 +11,7 @@ from sistema_de_salud.storage.cita_json_store import CitaJsonStore
 from sistema_de_salud.registro_paciente import RegistroPaciente
 from sistema_de_salud.registro_medico import RegistroMedico
 from sistema_de_salud.cita_medica import CitaMedica
+from sistema_de_salud.criptografia import Criptografia
 from sistema_de_salud.cfg.gestor_centro_salud_config import JSON_FILES_PATH
 
 from cryptography.hazmat.primitives import hashes
@@ -42,52 +43,25 @@ class GestorCentroSalud:
         registro = store_pacientes.guardar_paciente_store(paciente)
         # Solo si el paciente es registrado correctamente (y no estaba registrado antes)
         if registro is True:
-            # Derivamos una password segura mediante una KDF (Key Derivation Function)
-            salt = os.urandom(16)   # generamos un salt aleatorio, los valores seguros tienen 16 bytes (128 bits) o más
-            # Algoritmo de coste variable PBKDF2 (Password Based Key Derivation Function 2)
-            # algoritmo: SHA256 ... ; longitud max: 2^32 - 1 ; iteraciones: más iteraciones puede mitigar brute force attacks
-            kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=480000)
-            # Derivamos la clave criptográfica
-            key = kdf.derive(password.encode('utf-8'))      # encode('utf-8') para convertir de string a bytes
-            # Convertimos salt y derived key en strings hexadecimales para almacenarlas
-            salt_hex = salt.hex()
-            key_hex = key.hex()
-            # Guardamos la información de autenticación
-            usuario = {
-                self.KEY_LABEL_USER_ID: id_paciente,
-                self.KEY_LABEL_USER_SALT: salt_hex,
-                self.KEY_LABEL_USER_KEY: key_hex
-            }
-            store_credenciales = AutenticacionJsonStore()
-            store_credenciales.guardar_credenciales_store(usuario)
+            criptografia = Criptografia()
+            # Derivamos una password segura mediante una KDF y la almacenamos
+            criptografia.guardar_password(id_paciente, password)
+            # Generamos una pareja de claves con RSA para el paciente
+            criptografia.generar_claves_RSA(paciente.private_key_file_name, paciente.public_key_file_name)
         return paciente.id_paciente
 
     def registro_medico(self, id_medico: str, nombre_completo: str, telefono: str, edad: str, especialidad: str, password: str) -> str:
         """Registra a un médico"""
         medico = RegistroMedico(id_medico, nombre_completo, telefono, edad, especialidad)
         store_medicos = MedicoJsonStore()
-        registro_medico = store_medicos.guardar_medico_store(medico)
-
-        # Solo si el paciente es registrado correctamente (y no estaba registrado antes)
-        if registro_medico is True:
-            # Derivamos una password segura mediante una KDF (Key Derivation Function)
-            salt = os.urandom(16)   # generamos un salt aleatorio, los valores seguros tienen 16 bytes (128 bits) o más
-            # Algoritmo de coste variable PBKDF2 (Password Based Key Derivation Function 2)
-            # algoritmo: SHA256 ... ; longitud max: 2^32 - 1 ; iteraciones: más iteraciones puede mitigar brute force attacks
-            kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=480000)
-            # Derivamos la clave criptográfica
-            key = kdf.derive(password.encode('utf-8'))      # encode('utf-8') para convertir de string a bytes
-            # Convertimos salt y derived key en strings hexadecimales para almacenarlas
-            salt_hex = salt.hex()
-            key_hex = key.hex()
-            # Guardamos la información de autenticación
-            usuario = {
-                self.KEY_LABEL_USER_ID: id_medico,
-                self.KEY_LABEL_USER_SALT: salt_hex,
-                self.KEY_LABEL_USER_KEY: key_hex
-            }
-            store_credenciales = AutenticacionJsonStore()
-            store_credenciales.guardar_credenciales_store(usuario)
+        registro = store_medicos.guardar_medico_store(medico)
+        # Solo si el médico es registrado correctamente (y no estaba registrado antes)
+        if registro is True:
+            criptografia = Criptografia()
+            # Derivamos una password segura mediante una KDF y la almacenamos
+            criptografia.guardar_password(id_medico, password)
+            # Generamos una pareja de claves con RSA para el médico
+            criptografia.generar_claves_RSA(medico.private_key_file_name, medico.public_key_file_name)
         return medico.id_medico
 
     def registro_cita(self, id_medico: str, especialidad: str, fecha_hora, id_paciente: str, telefono_paciente: str, motivo_consulta: str):

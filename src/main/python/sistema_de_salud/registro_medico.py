@@ -19,6 +19,8 @@ class RegistroMedico:
         justnow = datetime.utcnow()
         self.__time_stamp = datetime.timestamp(justnow)
         self.__mis_citas = []
+        self.__private_key_file_name = id_medico + "_private_key.pem"
+        self.__public_key_file_name = id_medico + "_public_key.pem"
 
         # añadimos el atributo usuario_sys_id para que se guarde en store_medicos
         #self.__usuario_sys_id = self.user_system_id
@@ -111,6 +113,16 @@ class RegistroMedico:
     def borrar_cita_medico(self, info_cita):
         """Borra la información de una cita de la lista mis_citas del médico"""
         self.__mis_citas.remove(info_cita)
+
+    @property
+    def private_key_file_name(self):
+        """Read-only property que devuelve el nombre del fichero de la private_key del médico"""
+        return self.__private_key_file_name
+
+    @property
+    def public_key_file_name(self):
+        """Read-only property que devuelve el nombre del fichero de la public_key del médico"""
+        return self.__public_key_file_name
 
     #@property
     #def user_system_id(self):
