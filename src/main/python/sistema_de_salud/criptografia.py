@@ -41,6 +41,26 @@ class Criptografia:
         store_credenciales = AutenticacionJsonStore()
         store_credenciales.guardar_credenciales_store(usuario)
 
+    def comprobar_password(self, id_usuario: str, password: str):
+        # Obtenemos el salt y la key del paciente almacenados
+        store_credenciales = AutenticacionJsonStore()
+        item = store_credenciales.buscar_credenciales_store(id_usuario)
+        stored_salt_hex = item[self.KEY_LABEL_USER_SALT]
+        stored_key_hex = item[self.KEY_LABEL_USER_KEY]
+        print("Stored salt: ", stored_salt_hex)
+        print("Stored key:   ", stored_key_hex)
+        # Convertimos el salt a bytes
+        stored_salt = bytes.fromhex(stored_salt_hex)
+        # Derivamos la clave a partir del password introducido por el usuario
+        kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=stored_salt, iterations=480000)
+        key = kdf.derive(password.encode('utf-8'))
+        # Convertimos la key a hexadecimal y comparamos con la key almacenada
+        key_hex = key.hex()
+        print("Generated key:", key_hex)
+        if key_hex != stored_key_hex:
+            return False
+        return True
+
     def generar_claves_RSA(self, private_key_file_name: str, public_key_file_name: str):
         """Genera un par de claves (pública y privada) para un usuario con el criptosistema asimétrico RSA"""
         # Generamos una pareja de claves con RSA para el usuario

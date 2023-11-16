@@ -5,7 +5,6 @@ from datetime import datetime
 
 from sistema_de_salud.storage.paciente_json_store import PacienteJsonStore
 from sistema_de_salud.storage.medico_json_store import MedicoJsonStore
-from sistema_de_salud.storage.autenticacion_json_store import AutenticacionJsonStore
 from sistema_de_salud.storage.cita_json_store import CitaJsonStore
 
 from sistema_de_salud.registro_paciente import RegistroPaciente
@@ -14,8 +13,6 @@ from sistema_de_salud.cita_medica import CitaMedica
 from sistema_de_salud.criptografia import Criptografia
 from sistema_de_salud.cfg.gestor_centro_salud_config import JSON_FILES_PATH
 
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.fernet import Fernet
 
 
@@ -143,22 +140,8 @@ class GestorCentroSalud:
         paciente = store_pacientes.buscar_paciente_store(id_paciente)
         if paciente is None:
             return 1
-        # Obtenemos el salt y la key del paciente almacenados
-        store_credenciales = AutenticacionJsonStore()
-        item = store_credenciales.buscar_credenciales_store(paciente[self.KEY_LABEL_PACIENTE_ID])
-        stored_salt_hex = item[self.KEY_LABEL_USER_SALT]
-        stored_key_hex = item[self.KEY_LABEL_USER_KEY]
-        print("Stored salt: ", stored_salt_hex)
-        print("Stored key:   ", stored_key_hex)
-        # Convertimos el salt a bytes
-        stored_salt = bytes.fromhex(stored_salt_hex)
-        # Derivamos la clave a partir del password introducido por el usuario
-        kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=stored_salt, iterations=480000)
-        key = kdf.derive(password.encode('utf-8'))
-        # Convertimos la key a hexadecimal y comparamos con la key almacenada
-        key_hex = key.hex()
-        print("Generated key:", key_hex)
-        if key_hex != stored_key_hex:
+        criptografia = Criptografia()
+        if criptografia.comprobar_password(paciente[self.KEY_LABEL_PACIENTE_ID], password) is False:
             print("Contraseña incorrecta\n")
             return 2
         return 0
@@ -170,22 +153,8 @@ class GestorCentroSalud:
         medico = store_medicos.buscar_medico_store(id_medico)
         if medico is None:
             return 1
-        # Obtenemos el salt y la key del médico almacenados
-        store_credenciales = AutenticacionJsonStore()
-        item = store_credenciales.buscar_credenciales_store(medico[self.KEY_LABEL_MEDICO_ID])
-        stored_salt_hex = item[self.KEY_LABEL_USER_SALT]
-        stored_key_hex = item[self.KEY_LABEL_USER_KEY]
-        print("Stored salt: ", stored_salt_hex)
-        print("Stored key:   ", stored_key_hex)
-        # Convertimos el salt a bytes
-        stored_salt = bytes.fromhex(stored_salt_hex)
-        # Derivamos la clave a partir del password introducido por el usuario
-        kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=stored_salt, iterations=480000)
-        key = kdf.derive(password.encode('utf-8'))
-        # Convertimos la key a hexadecimal y comparamos con la key almacenada
-        key_hex = key.hex()
-        print("Generated key:", key_hex)
-        if key_hex != stored_key_hex:
+        criptografia = Criptografia()
+        if criptografia.comprobar_password(medico[self.KEY_LABEL_MEDICO_ID], password) is False:
             print("Contraseña incorrecta\n")
             return 2
         return 0
