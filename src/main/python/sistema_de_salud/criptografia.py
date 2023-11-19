@@ -9,6 +9,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import padding
 
 
 class Criptografia:
@@ -87,3 +88,47 @@ class Criptografia:
         with open(public_key_path, 'wb') as public_key_file:
             public_key_file.write(public_key_pem)
 
+    def obtener_clave_privada(self, private_key_file_name: str):
+        """Obtiene la clave privada a partir de un archivo pem"""
+        private_key_path = os.path.join(KEY_FILES_PATH, private_key_file_name)
+        with open(private_key_path, "rb") as key_file:
+            private_key = serialization.load_pem_private_key(
+                key_file.read(),
+                password=None,
+            )
+        return private_key
+
+    def obtener_clave_publica(self, public_key_file_name: str):
+        """Obtiene la clave pública a partir de un archivo pem"""
+        public_key_path = os.path.join(KEY_FILES_PATH, public_key_file_name)
+        with open(public_key_path, 'rb') as key_file:
+            public_key = serialization.load_pem_public_key(
+                key_file.read()
+            )
+        return public_key
+
+    def firmar_mensaje(self, message: bytes, private_key_file_name: str):
+        """Firma un mensaje con la clave privada del usuario"""
+        private_key = self.obtener_clave_privada(private_key_file_name)
+        signature = private_key.sign(
+            message,
+            padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH
+            ),
+            hashes.SHA256()
+        )
+        return signature
+
+    def comprobar_firma(self, message: bytes, signature, public_key):
+        """Comprueba la firma de un mensaje con la clave pública de quien lo firmó"""
+        # Si la firma no coincide lanza una excepción
+        public_key.verify(
+            signature,
+            message,
+            padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH
+            ),
+            hashes.SHA256()
+        )
