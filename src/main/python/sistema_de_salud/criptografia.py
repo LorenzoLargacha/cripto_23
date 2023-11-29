@@ -1,15 +1,21 @@
 """Criptografia"""
 import os
+from datetime import datetime, timedelta
 
 from sistema_de_salud.storage.autenticacion_json_store import AutenticacionJsonStore
 
 from sistema_de_salud.cfg.gestor_centro_salud_config import KEY_FILES_PATH
+from sistema_de_salud.cfg.gestor_centro_salud_config import CERT_FILES_PATH
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import padding
+
+from cryptography import x509
+from cryptography.x509.oid import NameOID
 
 
 class Criptografia:
@@ -22,15 +28,15 @@ class Criptografia:
         pass
 
     def guardar_password(self, id_usuario: str, password: str):
-        """Deriva y almacena una password segura a partir de la contraseña del usuario"""
-        # Derivamos una password segura mediante una KDF (Key Derivation Function)
+        """Deriva y almacena una clave segura a partir de la contraseña del usuario"""
+        # Derivamos una clave segura mediante una KDF (Key Derivation Function)
         salt = os.urandom(16)  # generamos un salt aleatorio, los valores seguros tienen 16 bytes (128 bits) o más
         # Algoritmo de coste variable PBKDF2 (Password Based Key Derivation Function 2)
         # algoritmo: SHA256 ; longitud max: 2^32 - 1
         kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=480000)
-        # Derivamos la clave criptográfica
+        # Derivamos la clave criptográfica a partir del password introducido por el usuario
         key = kdf.derive(password.encode('utf-8'))      # encode('utf-8') para convertir de string a bytes
-        # Convertimos salt y derived key en strings hexadecimales para almacenarlas
+        # Convertimos el salt y la derived key en strings hexadecimales para almacenarlos
         salt_hex = salt.hex()
         key_hex = key.hex()
         # Guardamos la información de autenticación
@@ -43,6 +49,7 @@ class Criptografia:
         store_credenciales.guardar_credenciales_store(usuario)
 
     def comprobar_password(self, id_usuario: str, password: str):
+        """Comprueba una contraseña introducida por el usuario con la clave derivada almacenada"""
         # Obtenemos el salt y la key del paciente almacenados
         store_credenciales = AutenticacionJsonStore()
         item = store_credenciales.buscar_credenciales_store(id_usuario)
@@ -132,3 +139,92 @@ class Criptografia:
             ),
             hashes.SHA256()
         )
+
+    def crear_autoridad_raiz(self):
+        """Crea las claves y el certificado del Ministerio de Sanidad (Autoridad Raíz - AC1)"""
+        # Generamos una pareja de claves con RSA para el Ministerio de Sanidad
+        private_key_file_name = "ministerioSanidad_private_key.pem"
+        self.generar_claves_RSA(private_key_file_name, "ministerioSanidad_public_key.pem")
+        private_key = self.obtener_clave_privada(private_key_file_name)
+        public_key = private_key.public_key()
+        # Creamos el certificado autofirmado
+        cert_file_name = "ministerioSanidad_cert.pem"
+        # subject e issuer son lo mismo en un certificado autofirmado
+        subject = issuer = x509.Name([
+            x509.NameAttribute(NameOID.COUNTRY_NAME, "ES"),
+            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Madrid"),
+            x509.NameAttribute(NameOID.LOCALITY_NAME, "Madrid"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Ministerio de Sanidad"),
+            x509.NameAttribute(NameOID.TITLE, "Autoridad Raiz"),
+            x509.NameAttribute(NameOID.COMMON_NAME, "sanidad.gob.es"),
+        ])
+        # Utiliza su clave privada para firmar su propio certificado
+        cert = self.crear_certificado(subject, issuer, 1460, public_key, private_key, cert_file_name)
+        return cert
+
+    def crear_autoridad_subordinada_centro_salud(self, centro_salud, ac1_cert):
+        """Crea las claves y el certificado del Centro de Salud (Autoridad de Certificación - AC2)"""
+        # Generamos una pareja de claves con RSA para el centro de salud
+        self.generar_claves_RSA(centro_salud.private_key_file_name, centro_salud.public_key_file_name)
+        private_key = self.obtener_clave_privada(centro_salud.private_key_file_name)
+        # Crear una Solicitud de Firma de Certificado (CSR) para el centro de salud
+        csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
+            # Información del centro de salud
+            x509.NameAttribute(NameOID.COUNTRY_NAME, centro_salud.pais),
+            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, centro_salud.provincia),
+            x509.NameAttribute(NameOID.LOCALITY_NAME, centro_salud.municipio),
+            x509.NameAttribute(NameOID.USER_ID, centro_salud.id_centro),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, centro_salud.nombre_centro),
+        ])).sign(private_key, hashes.SHA256())  # Firmar la CSR con la clave privada del centro de salud
+        # Crear certificado para el centro de salud (AC2) firmado con la clave privada de Ministerio Sanidad (AC1)
+        ac1_key = self.obtener_clave_privada(centro_salud.autoridad_raiz + "_private_key.pem")
+        cert = self.crear_certificado(csr.subject, ac1_cert.subject, 365, csr.public_key(), ac1_key, centro_salud.cert_file_name)
+        return cert
+
+    def crear_certificado(self, subject, issuer, duration, subject_public_key, ac_key, cert_file_name):
+        """Crea un certificado X.509"""
+        cert = x509.CertificateBuilder().subject_name(
+            subject
+        ).issuer_name(
+            issuer
+        ).public_key(
+            subject_public_key
+        ).serial_number(
+            x509.random_serial_number()
+        ).not_valid_before(
+            datetime.utcnow()
+        ).not_valid_after(
+            datetime.utcnow() + timedelta(days=duration)
+        ).sign(ac_key, hashes.SHA256())  # Firmar el certificado con la clave privada de la Autoridad de Certificación
+        # Guardamos el certificado en un PEM file
+        cert_path = os.path.join(CERT_FILES_PATH, cert_file_name)
+        with open(cert_path, 'wb') as cert_file:
+            cert_file.write(cert.public_bytes(serialization.Encoding.PEM))
+        return cert
+
+    def obtener_certificado(self, cert_file_name: str):
+        """Obtiene el certificado a partir de un archivo pem"""
+        cert_path = os.path.join(CERT_FILES_PATH, cert_file_name)
+        with open(cert_path, 'rb') as cert_file:
+            cert = x509.load_pem_x509_certificate(cert_file.read())
+        return cert
+
+    def crear_CSR_medico(self, medico, pais, nombre_centro):
+        """Crea una Solicitud de Firma de Certificado (CSR) para un médico"""
+        private_key = self.obtener_clave_privada(medico.private_key_file_name)
+        # Generate a CSR
+        csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
+            # Provide various details about who we are
+            x509.NameAttribute(NameOID.COUNTRY_NAME, pais),
+            x509.NameAttribute(NameOID.USER_ID, medico.id_medico),
+            x509.NameAttribute(NameOID.COMMON_NAME, medico.nombre_completo),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, nombre_centro),
+        ])).sign(private_key, hashes.SHA256())       # Firmar el CSR con la clave privada
+        return csr
+
+    def solicitar_certificado_medico(self, csr, cert_file_name, ac2_private_key_file_name, ac2_cert_file_name):
+        """Crear el certificado de un médico firmado con la clave privada de centro de salud (AC2)"""
+        ac2_key = self.obtener_clave_privada(ac2_private_key_file_name)
+        ac2_cert = self.obtener_certificado(ac2_cert_file_name)
+        cert = self.crear_certificado(csr.subject, ac2_cert.subject, 365, csr.public_key(), ac2_key, cert_file_name)
+        return cert

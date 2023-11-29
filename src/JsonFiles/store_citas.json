@@ -6,30 +6,8 @@
     "_CitaMedica__id_paciente": "54026189V",
     "_CitaMedica__telefono_paciente": "+34666888166",
     "_CitaMedica__motivo_consulta": "Dolor de cabeza",
-    "_CitaMedica__issued_at": 1700413247.856966,
-    "_CitaMedica__identificador_cita": "ec4c479de324a551678a0757482660c6a3eba7880fd0d856327d9322ecbf4c3a",
+    "_CitaMedica__issued_at": 1701212809.205745,
+    "_CitaMedica__identificador_cita": "6d05e02aacca4807b424c024f18e80d8eb5f7696737c4ea2d918517cd2ceb00b",
     "_CitaMedica__estado_cita": "Activa"
-  },
-  {
-    "_CitaMedica__id_medico": "92213124Y",
-    "_CitaMedica__especialidad": "Odontologia",
-    "_CitaMedica__fecha_hora": "2023-12-15 16:00:00",
-    "_CitaMedica__id_paciente": "54026189V",
-    "_CitaMedica__telefono_paciente": "+34666888166",
-    "_CitaMedica__motivo_consulta": "Caries",
-    "_CitaMedica__issued_at": 1700413406.991122,
-    "_CitaMedica__identificador_cita": "b8c9f9d69c637e30b66d3398afe0f8289b25b23e1e186af17ee006413cce682c",
-    "_CitaMedica__estado_cita": "Activa"
-  },
-  {
-    "_CitaMedica__id_medico": "84202258V",
-    "_CitaMedica__especialidad": "Pediatria",
-    "_CitaMedica__fecha_hora": "2023-12-15 10:00:00",
-    "_CitaMedica__id_paciente": "54026189V",
-    "_CitaMedica__telefono_paciente": "+34666888166",
-    "_CitaMedica__motivo_consulta": "Hijo",
-    "_CitaMedica__issued_at": 1700413734.153842,
-    "_CitaMedica__identificador_cita": "e56fb04396ba4850b3441a3817e15f718b184300bdc9a681c470084d81f8f7e1",
-    "_CitaMedica__estado_cita": "Cancelada"
   }
 ]

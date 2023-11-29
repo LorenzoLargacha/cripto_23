@@ -8,7 +8,7 @@ Pedro Hernández Bernaldo - 100432150
 
 
 Para ejecutar el programa debe acceder al archivo gestor_centro_salud_config.py 
-y modificar la variable global JSON_FILES_PATH con la ruta de la carpeta dentro 
+y modificar la variable global FOLDER_PATH con la ruta de la carpeta dentro 
 de su Usuario en la que haya descargado este repositorio.  
 En nuestro caso es: /PycharmProjects/cripto_23  
 Si no hace esto el programa no localizará la ruta de los archivos JSON.

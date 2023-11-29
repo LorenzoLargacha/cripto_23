@@ -31,7 +31,60 @@ class GestorCentroSalud:
     KEY_LABEL_CITA_ESPECIALIDAD = "_CitaMedica__especialidad"
 
     def __init__(self):
-        pass
+        # Creamos los atributos
+        self.__id_centro = "2625"   # Código de centro
+        self.__nombre_centro = "Valle de la Oliva"
+        self.__pais = "ES"
+        self.__provincia = "Madrid"
+        self.__municipio = "Majadahonda"
+        self.__autoridad_raiz = "ministerioSanidad"
+        self.__private_key_file_name = self.__id_centro + "_private_key.pem"
+        self.__public_key_file_name = self.__id_centro + "_public_key.pem"
+        self.__cert_file_name = self.__id_centro + "_cert.pem"
+
+    @property
+    def id_centro(self):
+        """Read-only property que devuelve el ID del centro de salud"""
+        return self.__id_centro
+
+    @property
+    def nombre_centro(self):
+        """Read-only property que devuelve el nombre del centro de salud"""
+        return self.__nombre_centro
+
+    @property
+    def pais(self):
+        """Read-only property que devuelve el país del centro de salud"""
+        return self.__pais
+    @property
+    def provincia(self):
+        """Read-only property que devuelve la provincia del centro de salud"""
+        return self.__provincia
+
+    @property
+    def municipio(self):
+        """Read-only property que devuelve el municipio del centro de salud"""
+        return self.__municipio
+
+    @property
+    def autoridad_raiz(self):
+        """Read-only property que devuelve el nombre de la autoridad superior al centro de salud"""
+        return self.__autoridad_raiz
+
+    @property
+    def private_key_file_name(self):
+        """Read-only property que devuelve el nombre del fichero de la private_key del centro de salud"""
+        return self.__private_key_file_name
+
+    @property
+    def public_key_file_name(self):
+        """Read-only property que devuelve el nombre del fichero de la public_key del centro de salud"""
+        return self.__public_key_file_name
+
+    @property
+    def cert_file_name(self):
+        """Read-only property que devuelve el nombre del fichero del certificado del centro de salud"""
+        return self.__cert_file_name
 
     def registro_paciente(self, id_paciente: str, nombre_completo: str, telefono: str, edad: str, password: str) -> str:
         """Registra a un paciente"""
@@ -59,6 +112,10 @@ class GestorCentroSalud:
             criptografia.guardar_password(id_medico, password)
             # Generamos una pareja de claves con RSA para el médico
             criptografia.generar_claves_RSA(medico.private_key_file_name, medico.public_key_file_name)
+            # Crear una Solicitud de Firma de Certificado (CSR) para el médico
+            csr = criptografia.crear_CSR_medico(medico, self.__pais, self.__nombre_centro)
+            # Solicitamos el certificado del médico al centro de salud (AC2)
+            criptografia.solicitar_certificado_medico(csr, medico.cert_file_name, self.__private_key_file_name, self.__cert_file_name)
         return medico.id_medico
 
     def registro_cita(self, id_medico: str, especialidad: str, fecha_hora, id_paciente: str, telefono_paciente: str, motivo_consulta: str):
@@ -397,7 +454,7 @@ class GestorCentroSalud:
 
     def main(self):
         """Función Principal"""
-        """
+
         # Preparación del programa
         # Borrar stores
         store = JSON_FILES_PATH + "store_pacientes.json"
@@ -412,7 +469,11 @@ class GestorCentroSalud:
         store = JSON_FILES_PATH + "store_citas.json"
         if os.path.isfile(store):
             os.remove(store)
-
+        # Crear Autoridad de Certificación Raíz (Ministerio de Sanidad)
+        criptografia = Criptografia()
+        ac1_cert = criptografia.crear_autoridad_raiz()
+        # Crear Autoridad de Certificación Subordinada (Centro de Salud)
+        criptografia.crear_autoridad_subordinada_centro_salud(self, ac1_cert)
         # Registrar pacientes
         self.registro_paciente("54026189V", "Lorenzo Largacha Sanz", "+34666888166", "22", "12345ABC")
         self.registro_paciente("58849111T", "Pedro Hernandez Bernaldo", "+34111555888", "22", "12345ABC")
@@ -424,7 +485,7 @@ class GestorCentroSalud:
         # Registrar cita
         fecha_hora = datetime(2023, 10, 31, 14, 30)
         self.registro_cita("76281872A", "Atencion Primaria", fecha_hora, "54026189V", "+34666888166", "Dolor de cabeza")
-        """
+
         # Menu de inicio
         while True:
             print("\n\n--- Bienvenido al sistema de gestión del Centro de Salud ---")
