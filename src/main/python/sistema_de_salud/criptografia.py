@@ -141,7 +141,7 @@ class Criptografia:
         )
 
     def crear_autoridad_raiz(self):
-        """Crea las claves y el certificado del Ministerio de Sanidad (Autoridad Raíz - AC1)"""
+        """Crea las claves y emite el certificado del Ministerio de Sanidad (Autoridad Raíz - AC1)"""
         # Generamos una pareja de claves con RSA para el Ministerio de Sanidad
         private_key_file_name = "ministerioSanidad_private_key.pem"
         self.generar_claves_RSA(private_key_file_name, "ministerioSanidad_public_key.pem")
@@ -151,34 +151,56 @@ class Criptografia:
         cert_file_name = "ministerioSanidad_cert.pem"
         # subject e issuer son lo mismo en un certificado autofirmado
         subject = issuer = x509.Name([
-            x509.NameAttribute(NameOID.COUNTRY_NAME, "ES"),
-            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Madrid"),
-            x509.NameAttribute(NameOID.LOCALITY_NAME, "Madrid"),
             x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Ministerio de Sanidad"),
             x509.NameAttribute(NameOID.TITLE, "Autoridad Raiz"),
             x509.NameAttribute(NameOID.COMMON_NAME, "sanidad.gob.es"),
+            x509.NameAttribute(NameOID.COUNTRY_NAME, "ES"),
+            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Madrid"),
+            x509.NameAttribute(NameOID.LOCALITY_NAME, "Madrid"),
         ])
         # Utiliza su clave privada para firmar su propio certificado
         cert = self.crear_certificado(subject, issuer, 1460, public_key, private_key, cert_file_name)
         return cert
 
     def crear_autoridad_subordinada_centro_salud(self, centro_salud, ac1_cert):
-        """Crea las claves y el certificado del Centro de Salud (Autoridad de Certificación - AC2)"""
+        """Crea las claves y emitir el certificado del Centro de Salud (Autoridad de Certificación - AC2)"""
         # Generamos una pareja de claves con RSA para el centro de salud
         self.generar_claves_RSA(centro_salud.private_key_file_name, centro_salud.public_key_file_name)
         private_key = self.obtener_clave_privada(centro_salud.private_key_file_name)
         # Crear una Solicitud de Firma de Certificado (CSR) para el centro de salud
         csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
             # Información del centro de salud
+            x509.NameAttribute(NameOID.USER_ID, centro_salud.id_centro),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, centro_salud.nombre_centro),
             x509.NameAttribute(NameOID.COUNTRY_NAME, centro_salud.pais),
             x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, centro_salud.provincia),
             x509.NameAttribute(NameOID.LOCALITY_NAME, centro_salud.municipio),
-            x509.NameAttribute(NameOID.USER_ID, centro_salud.id_centro),
-            x509.NameAttribute(NameOID.ORGANIZATION_NAME, centro_salud.nombre_centro),
         ])).sign(private_key, hashes.SHA256())  # Firmar la CSR con la clave privada del centro de salud
-        # Crear certificado para el centro de salud (AC2) firmado con la clave privada de Ministerio Sanidad (AC1)
+        # Emitir certificado para el centro de salud (AC2) firmado con la clave privada de Ministerio Sanidad (AC1)
         ac1_key = self.obtener_clave_privada(centro_salud.autoridad_raiz + "_private_key.pem")
         cert = self.crear_certificado(csr.subject, ac1_cert.subject, 365, csr.public_key(), ac1_key, centro_salud.cert_file_name)
+        return cert
+
+    def crear_autoridad_subordinada_fnmt(self, ac1_cert):
+        """Crea las claves y emitir el certificado de la Fábrica Nacional de Moneda y Timbre
+        (Autoridad de Certificación - AC3)"""
+        # Generamos una pareja de claves con RSA para la FNMT
+        private_key_file_name = "fnmt_private_key.pem"
+        self.generar_claves_RSA(private_key_file_name, "fnmt_public_key.pem")
+        private_key = self.obtener_clave_privada(private_key_file_name)
+        # Crear una Solicitud de Firma de Certificado (CSR) para la FNMT
+        csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
+            # Información de la FNMT
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Fabrica Nacional de Moneda y Timbre"),
+            x509.NameAttribute(NameOID.COMMON_NAME, "fnmt.es"),
+            x509.NameAttribute(NameOID.COUNTRY_NAME, "ES"),
+            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Madrid"),
+            x509.NameAttribute(NameOID.LOCALITY_NAME, "Madrid"),
+        ])).sign(private_key, hashes.SHA256())  # Firmar la CSR con la clave privada de la FNMT
+        # Emitir certificado para la FNMT (AC3) firmado con la clave privada de Ministerio Sanidad (AC1)
+        ac1_key = self.obtener_clave_privada("ministerioSanidad_private_key.pem")
+        cert_file_name = "fnmt_cert.pem"
+        cert = self.crear_certificado(csr.subject, ac1_cert.subject, 365, csr.public_key(), ac1_key, cert_file_name)
         return cert
 
     def crear_certificado(self, subject, issuer, duration, subject_public_key, ac_key, cert_file_name):
@@ -209,22 +231,61 @@ class Criptografia:
             cert = x509.load_pem_x509_certificate(cert_file.read())
         return cert
 
-    def crear_CSR_medico(self, medico, pais, nombre_centro):
+    def crear_CSR_medico(self, centro_salud, medico):
         """Crea una Solicitud de Firma de Certificado (CSR) para un médico"""
         private_key = self.obtener_clave_privada(medico.private_key_file_name)
         # Generate a CSR
         csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
-            # Provide various details about who we are
-            x509.NameAttribute(NameOID.COUNTRY_NAME, pais),
+            # Información del médico y del centro de salud en el que trabaja
             x509.NameAttribute(NameOID.USER_ID, medico.id_medico),
             x509.NameAttribute(NameOID.COMMON_NAME, medico.nombre_completo),
-            x509.NameAttribute(NameOID.ORGANIZATION_NAME, nombre_centro),
-        ])).sign(private_key, hashes.SHA256())       # Firmar el CSR con la clave privada
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, centro_salud.nombre_centro),
+            x509.NameAttribute(NameOID.COUNTRY_NAME, centro_salud.pais),
+            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, centro_salud.provincia),
+            x509.NameAttribute(NameOID.LOCALITY_NAME, centro_salud.municipio),
+        ])).sign(private_key, hashes.SHA256())       # Firmar la CSR con la clave privada
         return csr
 
-    def solicitar_certificado_medico(self, csr, cert_file_name, ac2_private_key_file_name, ac2_cert_file_name):
-        """Crear el certificado de un médico firmado con la clave privada de centro de salud (AC2)"""
-        ac2_key = self.obtener_clave_privada(ac2_private_key_file_name)
-        ac2_cert = self.obtener_certificado(ac2_cert_file_name)
+    def crear_CSR_paciente(self, paciente):
+        """Crea una Solicitud de Firma de Certificado (CSR) para un paciente"""
+        private_key = self.obtener_clave_privada(paciente.private_key_file_name)
+        # Generate a CSR
+        csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
+            # Información del paciente
+            x509.NameAttribute(NameOID.USER_ID, paciente.id_paciente),
+            x509.NameAttribute(NameOID.COMMON_NAME, paciente.nombre_completo),
+            x509.NameAttribute(NameOID.COUNTRY_NAME, "ES"),
+            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Madrid"),
+            x509.NameAttribute(NameOID.LOCALITY_NAME, "Madrid"),
+        ])).sign(private_key, hashes.SHA256())       # Firmar la CSR con la clave privada
+        return csr
+
+    def solicitar_certificado_medico(self, centro_salud, csr, public_key, cert_file_name):
+        """Emitir el certificado de un médico firmado con la clave privada de centro de salud (AC2)"""
+        ac2_key = self.obtener_clave_privada(centro_salud.private_key_file_name)
+        ac2_cert = self.obtener_certificado(centro_salud.cert_file_name)
+        # Verificar la firma de la CSR con la clave pública del médico, si la firma no coincide se lanza una excepción
+        public_key.verify(
+            csr.signature,
+            csr.tbs_certrequest_bytes,
+            padding.PKCS1v15(),
+            csr.signature_hash_algorithm,
+        )
+        # Si la firma es correcta emitimos el certificado
         cert = self.crear_certificado(csr.subject, ac2_cert.subject, 365, csr.public_key(), ac2_key, cert_file_name)
+        return cert
+
+    def solicitar_certificado_paciente(self, csr, public_key, cert_file_name):
+        """Emitir el certificado de un paciente firmado con la clave privada de la FNMT (AC3)"""
+        ac3_key = self.obtener_clave_privada("fnmt_private_key.pem")
+        ac3_cert = self.obtener_certificado("fnmt_cert.pem")
+        # Verificar la firma de la CSR con la clave pública del paciente, si la firma no coincide se lanza una excepción
+        public_key.verify(
+            csr.signature,
+            csr.tbs_certrequest_bytes,
+            padding.PKCS1v15(),
+            csr.signature_hash_algorithm,
+        )
+        # Si la firma es correcta emitimos el certificado
+        cert = self.crear_certificado(csr.subject, ac3_cert.subject, 365, csr.public_key(), ac3_key, cert_file_name)
         return cert

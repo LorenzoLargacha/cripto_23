@@ -4,26 +4,28 @@
     "_RegistroPaciente__nombre_completo": "Pedro Hernandez Bernaldo",
     "_RegistroPaciente__telefono": "+34111555888",
     "_RegistroPaciente__edad": "22",
-    "_RegistroPaciente__time_stamp": 1701212807.471266,
+    "_RegistroPaciente__time_stamp": 1701287201.111846,
     "_RegistroPaciente__mis_citas": [],
     "_RegistroPaciente__private_key_file_name": "58849111T_private_key.pem",
-    "_RegistroPaciente__public_key_file_name": "58849111T_public_key.pem"
+    "_RegistroPaciente__public_key_file_name": "58849111T_public_key.pem",
+    "_RegistroPaciente__cert_file_name": "58849111T_cert.pem"
   },
   {
     "_RegistroPaciente__id_paciente": "54026189V",
     "_RegistroPaciente__nombre_completo": "Lorenzo Largacha Sanz",
     "_RegistroPaciente__telefono": "+34666888166",
     "_RegistroPaciente__edad": "22",
-    "_RegistroPaciente__time_stamp": 1701212807.165129,
+    "_RegistroPaciente__time_stamp": 1701287200.704251,
     "_RegistroPaciente__mis_citas": [
       {
-        "_CitaMedica__identificador_cita": "6d05e02aacca4807b424c024f18e80d8eb5f7696737c4ea2d918517cd2ceb00b",
+        "_CitaMedica__identificador_cita": "0a4790eebe0ecf34583584dff98f5c607d537e8879f5e22c6b2aa20d7502a3f0",
         "_CitaMedica__fecha_hora": "2023-10-31 14:30:00",
         "_CitaMedica__id_medico": "76281872A",
         "_CitaMedica__especialidad": "Atencion Primaria"
       }
     ],
     "_RegistroPaciente__private_key_file_name": "54026189V_private_key.pem",
-    "_RegistroPaciente__public_key_file_name": "54026189V_public_key.pem"
+    "_RegistroPaciente__public_key_file_name": "54026189V_public_key.pem",
+    "_RegistroPaciente__cert_file_name": "54026189V_cert.pem"
   }
 ]

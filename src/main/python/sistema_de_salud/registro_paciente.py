@@ -20,6 +20,7 @@ class RegistroPaciente:
         self.__mis_citas = []
         self.__private_key_file_name = id_paciente + "_private_key.pem"
         self.__public_key_file_name = id_paciente + "_public_key.pem"
+        self.__cert_file_name = id_paciente + "_cert.pem"
 
         # añadimos el atributo usuario_sys_id para que se guarde en store_pacientes
         #self.__usuario_sys_id = self.user_system_id
@@ -115,6 +116,11 @@ class RegistroPaciente:
     def public_key_file_name(self):
         """Read-only property que devuelve el nombre del fichero de la public_key del paciente"""
         return self.__public_key_file_name
+
+    @property
+    def cert_file_name(self):
+        """Read-only property que devuelve el nombre del fichero del certificado del paciente"""
+        return self.__cert_file_name
 
     #@property
     #def user_system_id(self):

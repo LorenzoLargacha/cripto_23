@@ -98,6 +98,12 @@ class GestorCentroSalud:
             criptografia.guardar_password(id_paciente, password)
             # Generamos una pareja de claves con RSA para el paciente
             criptografia.generar_claves_RSA(paciente.private_key_file_name, paciente.public_key_file_name)
+            # Crear una Solicitud de Firma de Certificado (CSR) para el paciente
+            csr = criptografia.crear_CSR_paciente(paciente)
+            # Solicitamos el certificado del paciente a la FNMT (AC3)
+            private_key = criptografia.obtener_clave_privada(paciente.private_key_file_name)
+            public_key = private_key.public_key()
+            criptografia.solicitar_certificado_paciente(csr, public_key, paciente.cert_file_name)
         return paciente.id_paciente
 
     def registro_medico(self, id_medico: str, nombre_completo: str, telefono: str, edad: str, especialidad: str, password: str) -> str:
@@ -113,9 +119,11 @@ class GestorCentroSalud:
             # Generamos una pareja de claves con RSA para el médico
             criptografia.generar_claves_RSA(medico.private_key_file_name, medico.public_key_file_name)
             # Crear una Solicitud de Firma de Certificado (CSR) para el médico
-            csr = criptografia.crear_CSR_medico(medico, self.__pais, self.__nombre_centro)
+            csr = criptografia.crear_CSR_medico(self, medico)
             # Solicitamos el certificado del médico al centro de salud (AC2)
-            criptografia.solicitar_certificado_medico(csr, medico.cert_file_name, self.__private_key_file_name, self.__cert_file_name)
+            private_key = criptografia.obtener_clave_privada(medico.private_key_file_name)
+            public_key = private_key.public_key()
+            criptografia.solicitar_certificado_medico(self, csr, public_key, medico.cert_file_name)
         return medico.id_medico
 
     def registro_cita(self, id_medico: str, especialidad: str, fecha_hora, id_paciente: str, telefono_paciente: str, motivo_consulta: str):
@@ -455,7 +463,7 @@ class GestorCentroSalud:
     def main(self):
         """Función Principal"""
 
-        # Preparación del programa
+        # Preparación del sistema
         # Borrar stores
         store = JSON_FILES_PATH + "store_pacientes.json"
         if os.path.isfile(store):
@@ -474,6 +482,8 @@ class GestorCentroSalud:
         ac1_cert = criptografia.crear_autoridad_raiz()
         # Crear Autoridad de Certificación Subordinada (Centro de Salud)
         criptografia.crear_autoridad_subordinada_centro_salud(self, ac1_cert)
+        # Crear Autoridad de Certificación Subordinada (FNMT)
+        criptografia.crear_autoridad_subordinada_fnmt(ac1_cert)
         # Registrar pacientes
         self.registro_paciente("54026189V", "Lorenzo Largacha Sanz", "+34666888166", "22", "12345ABC")
         self.registro_paciente("58849111T", "Pedro Hernandez Bernaldo", "+34111555888", "22", "12345ABC")
