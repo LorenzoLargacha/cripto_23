@@ -129,30 +129,34 @@ class GestorCentroSalud:
     def registro_cita(self, id_medico: str, especialidad: str, fecha_hora, id_paciente: str, telefono_paciente: str, motivo_consulta: str):
         """Registra una cita médica"""
         cita = CitaMedica(id_medico, especialidad, fecha_hora, id_paciente, telefono_paciente, motivo_consulta)
-
         # Cifrado simétrico
         print("\nGenerando clave simétrica...")
-        key = Fernet.generate_key()
-        # Encriptamos la key con la clave pública del médico (RSA)
-
+        key = Fernet.generate_key()         # clave simétrica de sesión
+        # El paciente valida el certificado del médico, con el certificado del Centro de Salud (AC2)
+        # y el certificado del Ministerio de Sanidad (AC1)
+        medico = RegistroMedico.obtener_medico(id_medico)
+        criptografia = Criptografia()
+        cert_medico = criptografia.obtener_certificado(medico.cert_file_name)
+        cert_ac2 = criptografia.obtener_certificado(self.cert_file_name)
+        cert_ac1 = criptografia.obtener_certificado("ministerioSanidad_cert.pem")
+        criptografia.validar_certificado(cert_medico, cert_ac2, cert_ac1)
+        # Encriptamos la key con la clave pública del médico (RSA) para transmitirla de forma segura
+        encrypted_key = criptografia.encriptar_RSA(key, cert_medico)
         # Serializamos la cita como un string y lo convertimos a bytes
         bytes_data = json.dumps(cita.__dict__).encode('utf-8')
         # Firmamos la cita con la clave privada del paciente
-        criptografia = Criptografia()
         paciente = RegistroPaciente.obtener_paciente(id_paciente)
         firma = criptografia.firmar_mensaje(bytes_data, paciente.private_key_file_name)
         # Encriptamos la cita con Fernet
         print("Encriptando cita...")
         f = Fernet(key)
-        token = f.encrypt(bytes_data)       # obtenemos los datos encriptados como un token
+        token = f.encrypt(bytes_data)       # obtenemos la cita encriptada como un token
         # Enviamos la cita encriptada al médico, con el certificado del paciente
         print("Enviando cita al médico...")
         cert_paciente = criptografia.obtener_certificado(paciente.cert_file_name)
         cert_ac3 = criptografia.obtener_certificado("fnmt_cert.pem")
-        cert_ac1 = criptografia.obtener_certificado("ministerioSanidad_cert.pem")
-        confirmacion_encriptada, signature, cert_medico = self.enviar_cita(token, key, id_medico, firma, cert_paciente, cert_ac3, cert_ac1)
+        confirmacion_encriptada, signature, cert_medico = self.enviar_cita(token, encrypted_key, id_medico, firma, cert_paciente, cert_ac3, cert_ac1)
         # Recibimos la confirmación y la desencriptamos
-        cert_ac2 = criptografia.obtener_certificado(self.cert_file_name)
         id_cita_confirmada = self.recibir_confirmacion(confirmacion_encriptada, key, id_paciente, signature, cert_medico, cert_ac2, cert_ac1)
         if id_cita_confirmada == cita.identificador_cita:
             # Guardamos la información de la cita en la lista mis_citas del paciente
@@ -172,15 +176,18 @@ class GestorCentroSalud:
             store_citas.guardar_cita_store(cita)
         return cita
 
-    def enviar_cita(self, token, key, id_medico, firma, cert_paciente, cert_ac3, cert_ac1):
+    def enviar_cita(self, token, encrypted_key, id_medico, firma, cert_paciente, cert_ac3, cert_ac1):
         """Envía una solicitud de cita del paciente al médico"""
+        # Desencriptamos la key con la clave privada del médico (RSA)
+        medico = RegistroMedico.obtener_medico(id_medico)
+        criptografia = Criptografia()
+        key = criptografia.desencriptar_RSA(encrypted_key, medico.private_key_file_name)
         # Desencriptamos la cita con Fernet
         print("Desencriptando cita...")
         f = Fernet(key)
         bytes_data = f.decrypt(token)
         # El médico valida el certificado del paciente, con el certificado de la FNMT (AC3)
         # y el certificado del Ministerio de Sanidad (AC1)
-        criptografia = Criptografia()
         criptografia.validar_certificado(cert_paciente, cert_ac3, cert_ac1)
         # Obtenemos la clave pública del paciente de su certificado
         public_key_paciente = cert_paciente.public_key()
@@ -188,7 +195,6 @@ class GestorCentroSalud:
         criptografia.comprobar_firma(bytes_data, firma, public_key_paciente)
         # Guardamos la información de la cita en la lista mis_citas del médico
         cita_dict = json.loads(bytes_data.decode('utf-8'))
-        medico = RegistroMedico.obtener_medico(id_medico)
         identificador_cita = cita_dict[self.KEY_LABEL_CITA_ID]
         info_cita = {
             self.KEY_LABEL_CITA_ID: identificador_cita,

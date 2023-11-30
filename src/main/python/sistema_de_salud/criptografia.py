@@ -117,7 +117,31 @@ class Criptografia:
             )
         return public_key
 
+    def encriptar_RSA(self, message: bytes, cert):
+        """Encripta un mensaje con el criptosistema asimétrico RSA"""
+        public_key = cert.public_key()
+        ciphertext = public_key.encrypt(
+            message,
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None
+            )
+        )
+        return ciphertext
 
+    def desencriptar_RSA(self, ciphertext: bytes, private_key_file_name):
+        """Desencripta un mensaje con el criptosistema asimétrico RSA"""
+        private_key = self.obtener_clave_privada(private_key_file_name)
+        message = private_key.decrypt(
+            ciphertext,
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None
+            )
+        )
+        return message
 
     def firmar_mensaje(self, message: bytes, private_key_file_name: str):
         """Firma un mensaje con la clave privada del usuario"""

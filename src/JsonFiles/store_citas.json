@@ -6,8 +6,8 @@
     "_CitaMedica__id_paciente": "54026189V",
     "_CitaMedica__telefono_paciente": "+34666888166",
     "_CitaMedica__motivo_consulta": "Dolor de cabeza",
-    "_CitaMedica__issued_at": 1701356283.572951,
-    "_CitaMedica__identificador_cita": "bdc8775e7ae0fde56123f7369d0af58f13e9e502f4dcbcb2d610d99f97f9c643",
+    "_CitaMedica__issued_at": 1701359884.356455,
+    "_CitaMedica__identificador_cita": "eec4795f1bef538d942f270eca9f45a7945a3646a445a63a28b7eacaec16280d",
     "_CitaMedica__estado_cita": "Activa"
   }
 ]
