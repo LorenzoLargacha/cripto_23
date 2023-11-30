@@ -100,7 +100,7 @@ class GestorCentroSalud:
             criptografia.generar_claves_RSA(paciente.private_key_file_name, paciente.public_key_file_name)
             # Crear una Solicitud de Firma de Certificado (CSR) para el paciente
             csr = criptografia.crear_CSR_paciente(paciente)
-            # Solicitamos el certificado del paciente a la FNMT (AC3)
+            # Solicitamos el certificado del paciente a la Dirección General de Policía (AC3)
             private_key = criptografia.obtener_clave_privada(paciente.private_key_file_name)
             public_key = private_key.public_key()
             criptografia.solicitar_certificado_paciente(csr, public_key, paciente.cert_file_name)
@@ -130,7 +130,6 @@ class GestorCentroSalud:
         """Registra una cita médica"""
         cita = CitaMedica(id_medico, especialidad, fecha_hora, id_paciente, telefono_paciente, motivo_consulta)
         # Cifrado simétrico
-        print("\nGenerando clave simétrica...")
         key = Fernet.generate_key()         # clave simétrica de sesión
         # El paciente valida el certificado del médico, con el certificado del Centro de Salud (AC2)
         # y el certificado del Ministerio de Sanidad (AC1)
@@ -138,7 +137,7 @@ class GestorCentroSalud:
         criptografia = Criptografia()
         cert_medico = criptografia.obtener_certificado(medico.cert_file_name)
         cert_ac2 = criptografia.obtener_certificado(self.cert_file_name)
-        cert_ac1 = criptografia.obtener_certificado("ministerioSanidad_cert.pem")
+        cert_ac1 = criptografia.obtener_certificado(criptografia.CERT_FILE_NAME_AC1)
         criptografia.validar_certificado(cert_medico, cert_ac2, cert_ac1)
         # Encriptamos la key con la clave pública del médico (RSA) para transmitirla de forma segura
         encrypted_key = criptografia.encriptar_RSA(key, cert_medico)
@@ -148,13 +147,11 @@ class GestorCentroSalud:
         paciente = RegistroPaciente.obtener_paciente(id_paciente)
         firma = criptografia.firmar_mensaje(bytes_data, paciente.private_key_file_name)
         # Encriptamos la cita con Fernet
-        print("Encriptando cita...")
         f = Fernet(key)
         token = f.encrypt(bytes_data)       # obtenemos la cita encriptada como un token
         # Enviamos la cita encriptada al médico, con el certificado del paciente
-        print("Enviando cita al médico...")
         cert_paciente = criptografia.obtener_certificado(paciente.cert_file_name)
-        cert_ac3 = criptografia.obtener_certificado("fnmt_cert.pem")
+        cert_ac3 = criptografia.obtener_certificado(criptografia.CERT_FILE_NAME_AC3)
         confirmacion_encriptada, signature, cert_medico = self.enviar_cita(token, encrypted_key, id_medico, firma, cert_paciente, cert_ac3, cert_ac1)
         # Recibimos la confirmación y la desencriptamos
         id_cita_confirmada = self.recibir_confirmacion(confirmacion_encriptada, key, id_paciente, signature, cert_medico, cert_ac2, cert_ac1)
@@ -183,10 +180,9 @@ class GestorCentroSalud:
         criptografia = Criptografia()
         key = criptografia.desencriptar_RSA(encrypted_key, medico.private_key_file_name)
         # Desencriptamos la cita con Fernet
-        print("Desencriptando cita...")
         f = Fernet(key)
         bytes_data = f.decrypt(token)
-        # El médico valida el certificado del paciente, con el certificado de la FNMT (AC3)
+        # El médico valida el certificado del paciente, con el certificado de la Dirección General de Policía (AC3)
         # y el certificado del Ministerio de Sanidad (AC1)
         criptografia.validar_certificado(cert_paciente, cert_ac3, cert_ac1)
         # Obtenemos la clave pública del paciente de su certificado
@@ -210,17 +206,14 @@ class GestorCentroSalud:
         confirmacion = identificador_cita.encode('utf-8')
         firma = criptografia.firmar_mensaje(confirmacion, medico.private_key_file_name)
         # Encriptamos la confirmación
-        print("Encriptando confirmación...")
         confirmacion_encriptada = f.encrypt(confirmacion)
         # Devolvemos la confirmación
-        print("Devolviendo confirmación al paciente...")
         cert_medico = criptografia.obtener_certificado(medico.cert_file_name)
         return confirmacion_encriptada, firma, cert_medico
 
     def recibir_confirmacion(self, token, key, id_paciente, firma, cert_medico, cert_ac2, cert_ac1):
         """Recibe la confirmación de la cita del médico"""
         # Desencriptamos la confirmación con Fernet
-        print("Desencriptando confirmación...")
         f = Fernet(key)
         bytes_data = f.decrypt(token)
         # El paciente valida el certificado del médico, con el certificado del Centro de Salud (AC2)
@@ -479,10 +472,8 @@ class GestorCentroSalud:
             else:
                 print("Opción no válida. Inténtelo de nuevo.")
 
-    def main(self):
-        """Función Principal"""
-
-        # Preparación del sistema
+    def preparacion_sistema(self):
+        """Preparación del sistema"""
         # Borrar stores
         store = JSON_FILES_PATH + "store_pacientes.json"
         if os.path.isfile(store):
@@ -501,8 +492,8 @@ class GestorCentroSalud:
         cert_ac1 = criptografia.crear_autoridad_raiz()
         # Crear Autoridad de Certificación Subordinada (Centro de Salud)
         criptografia.crear_autoridad_subordinada_centro_salud(self, cert_ac1)
-        # Crear Autoridad de Certificación Subordinada (FNMT)
-        criptografia.crear_autoridad_subordinada_fnmt(cert_ac1)
+        # Crear Autoridad de Certificación Subordinada (Dirección General de Policía)
+        criptografia.crear_autoridad_subordinada_policia(cert_ac1)
         # Registrar pacientes
         self.registro_paciente("54026189V", "Lorenzo Largacha Sanz", "+34666888166", "22", "12345ABC")
         self.registro_paciente("58849111T", "Pedro Hernandez Bernaldo", "+34111555888", "22", "12345ABC")
@@ -514,6 +505,11 @@ class GestorCentroSalud:
         # Registrar cita
         fecha_hora = datetime(2024, 2, 21, 14, 30)
         self.registro_cita("76281872A", "Atencion Primaria", fecha_hora, "54026189V", "+34666888166", "Dolor de cabeza")
+
+    def main(self):
+        """Función Principal"""
+        # Preparación del sistema (solo hace falta ejecutarlo una vez, luego se puede comentar)
+        self.preparacion_sistema()
 
         # Menu de inicio
         while True:

@@ -27,6 +27,14 @@ class Criptografia:
     KEY_LABEL_USER_SALT = "_AutenticacionUsuario__salt"
     KEY_LABEL_USER_KEY =  "_AutenticacionUsuario__key"
 
+    PRIVATE_KEY_FILE_NAME_AC1 = "ministerioSanidad_private_key.pem"
+    PUBLIC_KEY_FILE_NAME_AC1 = "ministerioSanidad_public_key.pem"
+    CERT_FILE_NAME_AC1 = "ministerioSanidad_cert.pem"
+
+    PRIVATE_KEY_FILE_NAME_AC3 = "policia_private_key.pem"
+    PUBLIC_KEY_FILE_NAME_AC3 = "policia_public_key.pem"
+    CERT_FILE_NAME_AC3 = "policia_cert.pem"
+
     def __init__(self):
         pass
 
@@ -58,8 +66,8 @@ class Criptografia:
         item = store_credenciales.buscar_credenciales_store(id_usuario)
         stored_salt_hex = item[self.KEY_LABEL_USER_SALT]
         stored_key_hex = item[self.KEY_LABEL_USER_KEY]
-        print("Stored salt: ", stored_salt_hex)
-        print("Stored key:   ", stored_key_hex)
+        #print("Stored salt: ", stored_salt_hex)
+        #print("Stored key:   ", stored_key_hex)
         # Convertimos el salt a bytes
         stored_salt = bytes.fromhex(stored_salt_hex)
         # Derivamos la clave a partir del password introducido por el usuario
@@ -67,7 +75,7 @@ class Criptografia:
         key = kdf.derive(password.encode('utf-8'))
         # Convertimos la key a hexadecimal y comparamos con la key almacenada
         key_hex = key.hex()
-        print("Generated key:", key_hex)
+        #print("Generated key:", key_hex)
         if key_hex != stored_key_hex:
             return False
         return True
@@ -172,12 +180,10 @@ class Criptografia:
     def crear_autoridad_raiz(self):
         """Crea las claves y emite el certificado del Ministerio de Sanidad (Autoridad Raíz - AC1)"""
         # Generamos una pareja de claves con RSA para el Ministerio de Sanidad
-        private_key_file_name = "ministerioSanidad_private_key.pem"
-        self.generar_claves_RSA(private_key_file_name, "ministerioSanidad_public_key.pem")
-        private_key_ac1 = self.obtener_clave_privada(private_key_file_name)
+        self.generar_claves_RSA(self.PRIVATE_KEY_FILE_NAME_AC1, self.PUBLIC_KEY_FILE_NAME_AC1)
+        private_key_ac1 = self.obtener_clave_privada(self.PRIVATE_KEY_FILE_NAME_AC1)
         public_key_ac1 = private_key_ac1.public_key()
         # Creamos el certificado autofirmado
-        cert_file_name = "ministerioSanidad_cert.pem"
         # subject e issuer son lo mismo en un certificado autofirmado
         subject = issuer = x509.Name([
             x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Ministerio de Sanidad"),
@@ -188,7 +194,7 @@ class Criptografia:
             x509.NameAttribute(NameOID.LOCALITY_NAME, "Madrid"),
         ])
         # Utiliza su clave privada para firmar su propio certificado
-        cert = self.crear_certificado(subject, issuer, 1460, public_key_ac1, private_key_ac1, cert_file_name)
+        cert = self.crear_certificado(subject, issuer, 1460, public_key_ac1, private_key_ac1, self.CERT_FILE_NAME_AC1)
         return cert
 
     def crear_autoridad_subordinada_centro_salud(self, centro_salud, cert_ac1):
@@ -210,26 +216,24 @@ class Criptografia:
         cert = self.crear_certificado(csr.subject, cert_ac1.subject, 365, csr.public_key(), ac1_key, centro_salud.cert_file_name)
         return cert
 
-    def crear_autoridad_subordinada_fnmt(self, cert_ac1):
-        """Crea las claves y emitir el certificado de la Fábrica Nacional de Moneda y Timbre
+    def crear_autoridad_subordinada_policia(self, cert_ac1):
+        """Crea las claves y emitir el certificado de la Dirección General de Policía
         (Autoridad de Certificación - AC3)"""
-        # Generamos una pareja de claves con RSA para la FNMT
-        private_key_file_name = "fnmt_private_key.pem"
-        self.generar_claves_RSA(private_key_file_name, "fnmt_public_key.pem")
-        private_key = self.obtener_clave_privada(private_key_file_name)
-        # Crear una Solicitud de Firma de Certificado (CSR) para la FNMT
+        # Generamos una pareja de claves con RSA para la Policía
+        self.generar_claves_RSA(self.PRIVATE_KEY_FILE_NAME_AC3, self.PUBLIC_KEY_FILE_NAME_AC3)
+        private_key = self.obtener_clave_privada(self.PRIVATE_KEY_FILE_NAME_AC3)
+        # Crear una Solicitud de Firma de Certificado (CSR) para la Policía
         csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
-            # Información de la FNMT
-            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Fabrica Nacional de Moneda y Timbre"),
-            x509.NameAttribute(NameOID.COMMON_NAME, "fnmt.es"),
+            # Información de la Policía
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Dirección General de Policia"),
+            x509.NameAttribute(NameOID.COMMON_NAME, "dnielectronico.es"),
             x509.NameAttribute(NameOID.COUNTRY_NAME, "ES"),
             x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Madrid"),
             x509.NameAttribute(NameOID.LOCALITY_NAME, "Madrid"),
-        ])).sign(private_key, hashes.SHA256())  # Firmar la CSR con la clave privada de la FNMT
-        # Emitir certificado para la FNMT (AC3) firmado con la clave privada de Ministerio Sanidad (AC1)
-        ac1_key = self.obtener_clave_privada("ministerioSanidad_private_key.pem")
-        cert_file_name = "fnmt_cert.pem"
-        cert = self.crear_certificado(csr.subject, cert_ac1.subject, 365, csr.public_key(), ac1_key, cert_file_name)
+        ])).sign(private_key, hashes.SHA256())  # Firmar la CSR con la clave privada de la Policía
+        # Emitir certificado para la Policía (AC3) firmado con la clave privada de Ministerio Sanidad (AC1)
+        ac1_key = self.obtener_clave_privada(self.PRIVATE_KEY_FILE_NAME_AC1)
+        cert = self.crear_certificado(csr.subject, cert_ac1.subject, 365, csr.public_key(), ac1_key, self.CERT_FILE_NAME_AC3)
         return cert
 
     def crear_certificado(self, subject, issuer, duration, public_key_subject, private_key_ac, cert_file_name):
@@ -351,9 +355,9 @@ class Criptografia:
         return cert
 
     def solicitar_certificado_paciente(self, csr, public_key, cert_file_name):
-        """Emitir el certificado de un paciente firmado con la clave privada de la FNMT (AC3)"""
-        private_key_ac3 = self.obtener_clave_privada("fnmt_private_key.pem")
-        cert_ac3 = self.obtener_certificado("fnmt_cert.pem")
+        """Emitir el certificado de un paciente firmado con la clave privada de la Dirección General de Policía (AC3)"""
+        private_key_ac3 = self.obtener_clave_privada(self.PRIVATE_KEY_FILE_NAME_AC3)
+        cert_ac3 = self.obtener_certificado(self.CERT_FILE_NAME_AC3)
         # Verificar la firma de la CSR con la clave pública del paciente, si la firma no coincide lanza una excepción
         public_key.verify(
             csr.signature,
