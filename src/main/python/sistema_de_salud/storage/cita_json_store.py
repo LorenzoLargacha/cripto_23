@@ -20,7 +20,7 @@ class CitaJsonStore(JsonStore):
         __ERROR_MESSAGE_ID_REGISTRADO = "Cita ya registrada"
         __ERROR_MESSAGE_ID_NO_ENCONTRADO = "Cita no registrada"
 
-        def guardar_cita_store(self, cita: object) -> True:
+        def guardar_cita_store(self, cita: object, id_paciente) -> True:
             """Guarda un cita en un fichero Json"""
             # Importamos aquí CitaMedica para evitar import circular
             from sistema_de_salud.cita_medica import CitaMedica
@@ -33,7 +33,7 @@ class CitaJsonStore(JsonStore):
             if item is not None:
                 found = True    # si lo encontramos
             if found is False:
-                # *** Cuando cifremos con clave pública habrá que crear nuestro propio add_item que cifre ***
+                cita.encriptar_cita(id_paciente)    # Encriptamos la información sensible de la cita con RSA
                 self.add_item(cita)
             if found is True:
                 # Estamos intentando guardar en el store una cita que ya fue guardada

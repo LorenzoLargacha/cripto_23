@@ -4,13 +4,16 @@ import json
 from datetime import datetime
 from freezegun import freeze_time
 
+from sistema_de_salud.registro_paciente import RegistroPaciente
 from sistema_de_salud.registro_medico import RegistroMedico
 from sistema_de_salud.storage.cita_json_store import CitaJsonStore
 from sistema_de_salud.exception.excepciones_gestor import ExcepcionesGestor
+from sistema_de_salud.criptografia import Criptografia
+
 
 class CitaMedica:
     """Clase que representa una cita médica de un paciente"""
-    def __init__(self, id_medico, especialidad, fecha_hora, id_paciente, telefono_paciente, motivo_consulta, estado_cita="Activa"):
+    def __init__(self, id_medico, especialidad, fecha_hora, id_paciente, telefono_paciente, motivo_consulta, estado_cita="Activa", identificador_cita=None):
         # Creamos los atributos
         self.__id_medico = id_medico
         self.__especialidad = especialidad
@@ -20,14 +23,17 @@ class CitaMedica:
         self.__motivo_consulta = motivo_consulta
         justnow = datetime.utcnow()
         self.__issued_at = datetime.timestamp(justnow)
-        self.__identificador_cita = self.firma_cita
+        if identificador_cita is None:
+            self.__identificador_cita = self.firma_cita
+        else:
+            self.__identificador_cita = identificador_cita
         self.__estado_cita = estado_cita
 
     def __str__(self):
         return "CitaMedica:" + json.dumps(self.__dict__)
 
     @classmethod
-    def obtener_cita(cls, identificador_cita):
+    def obtener_cita(cls, identificador_cita, id_paciente):
         """Devuelve el objeto CitaMedica para el identificador_cita recibido"""
         store_citas = CitaJsonStore()
         cita_encontrada = store_citas.buscar_cita_store(identificador_cita)
@@ -44,8 +50,10 @@ class CitaMedica:
                    cita_encontrada["_CitaMedica__id_paciente"],
                    cita_encontrada["_CitaMedica__telefono_paciente"],
                    cita_encontrada["_CitaMedica__motivo_consulta"],
-                   cita_encontrada["_CitaMedica__estado_cita"])
+                   cita_encontrada["_CitaMedica__estado_cita"],
+                   cita_encontrada["_CitaMedica__identificador_cita"])
         freezer.stop()
+        cita.desencriptar_cita(id_paciente)
         return cita
 
     def __firma_string(self) -> str:
@@ -77,10 +85,40 @@ class CitaMedica:
         except ExcepcionesGestor as e:
             print(e)
 
-    def actualizar_cita_store(self) -> None:
+    def actualizar_cita_store(self, id_paciente) -> None:
         """Modifica la cita en store_citas"""
         store_citas = CitaJsonStore()
+        self.encriptar_cita(id_paciente)    # Encriptamos la información sensible de la cita con RSA
         store_citas.update_item(self, self.__identificador_cita)
+
+    def encriptar_cita(self, id_paciente) -> None:
+        """Encripta con RSA los datos sensibles de la cita"""
+        # Encriptamos con la clave pública del paciente para que solo él pueda desencriptar
+        criptografia = Criptografia()
+        paciente = RegistroPaciente.obtener_paciente(id_paciente)
+        cert_paciente = criptografia.obtener_certificado(paciente.cert_file_name)
+
+        id_paciente_cifrado = criptografia.encriptar_RSA(self.__id_paciente.encode('utf-8'), cert_paciente)
+        telefono_paciente_cifrado = criptografia.encriptar_RSA(self.__telefono_paciente.encode('utf-8'), cert_paciente)
+        motivo_consulta_cifrado = criptografia.encriptar_RSA(self.__motivo_consulta.encode('utf-8'), cert_paciente)
+
+        self.__id_paciente = id_paciente_cifrado.hex()
+        self.__telefono_paciente = telefono_paciente_cifrado.hex()
+        self.__motivo_consulta = motivo_consulta_cifrado.hex()
+
+    def desencriptar_cita(self, id_paciente) -> None:
+        """Desencripta con RSA los datos sensibles de la cita"""
+        # Desencriptamos con la clave privada del paciente
+        criptografia = Criptografia()
+        paciente = RegistroPaciente.obtener_paciente(id_paciente)
+
+        id_paciente_cifrado = criptografia.desencriptar_RSA(bytes.fromhex(self.__id_paciente), paciente.private_key_file_name)
+        telefono_paciente_cifrado = criptografia.desencriptar_RSA(bytes.fromhex(self.__telefono_paciente), paciente.private_key_file_name)
+        motivo_consulta_cifrado = criptografia.desencriptar_RSA(bytes.fromhex(self.__motivo_consulta), paciente.private_key_file_name)
+
+        self.__id_paciente = id_paciente_cifrado.hex()
+        self.__telefono_paciente = telefono_paciente_cifrado.hex()
+        self.__motivo_consulta = motivo_consulta_cifrado.hex()
 
 
     @property

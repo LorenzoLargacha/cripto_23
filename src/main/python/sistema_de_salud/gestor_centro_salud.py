@@ -173,7 +173,7 @@ class GestorCentroSalud:
             store_pacientes.update_item(paciente, paciente.id_paciente)
             # Guardamos la cita en el fichero store_citas
             store_citas = CitaJsonStore()
-            store_citas.guardar_cita_store(cita)
+            store_citas.guardar_cita_store(cita, paciente.id_paciente)
         return cita
 
     def enviar_cita(self, token, encrypted_key, id_medico, firma, cert_paciente, cert_ac3, cert_ac1):
@@ -409,9 +409,9 @@ class GestorCentroSalud:
         medico.actualizar_medico_store()
 
         # Cambiamos el estado de la cita a Cancelada
-        cita = CitaMedica.obtener_cita(identificador_cita)
+        cita = CitaMedica.obtener_cita(identificador_cita, id_paciente)
         cita.modificar_estado_cita()
-        cita.actualizar_cita_store()
+        cita.actualizar_cita_store(id_paciente)
         print("\nCita cancelada")
 
     def consultar_citas_paciente(self, id_paciente: str):
@@ -512,7 +512,7 @@ class GestorCentroSalud:
         self.registro_medico("92213124Y", "Juan Martin Perez", "+34555444222", "36", "Odontologia", "1234asdf")
         self.registro_medico("67720890N", "Candela Martinez Sanchez", "+34888444111", "38", "Matrona", "1234asdf")
         # Registrar cita
-        fecha_hora = datetime(2023, 10, 31, 14, 30)
+        fecha_hora = datetime(2024, 2, 21, 14, 30)
         self.registro_cita("76281872A", "Atencion Primaria", fecha_hora, "54026189V", "+34666888166", "Dolor de cabeza")
 
         # Menu de inicio
