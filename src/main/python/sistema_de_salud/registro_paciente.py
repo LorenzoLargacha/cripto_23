@@ -6,6 +6,7 @@ from freezegun import freeze_time
 from sistema_de_salud.storage.paciente_json_store import PacienteJsonStore
 from sistema_de_salud.exception.excepciones_gestor import ExcepcionesGestor
 
+
 class RegistroPaciente:
     """Clase que representa el registro de un nuevo paciente en el sistema"""
 
@@ -19,7 +20,6 @@ class RegistroPaciente:
         self.__time_stamp = datetime.timestamp(justnow)
         self.__mis_citas = []
         self.__private_key_file_name = id_paciente + "_private_key.pem"
-        self.__public_key_file_name = id_paciente + "_public_key.pem"
         self.__cert_file_name = id_paciente + "_cert.pem"
 
         # añadimos el atributo usuario_sys_id para que se guarde en store_pacientes
@@ -111,11 +111,6 @@ class RegistroPaciente:
     def private_key_file_name(self):
         """Read-only property que devuelve el nombre del fichero de la private_key del paciente"""
         return self.__private_key_file_name
-
-    @property
-    def public_key_file_name(self):
-        """Read-only property que devuelve el nombre del fichero de la public_key del paciente"""
-        return self.__public_key_file_name
 
     @property
     def cert_file_name(self):

@@ -39,7 +39,6 @@ class GestorCentroSalud:
         self.__municipio = "Majadahonda"
         self.__autoridad_raiz = "ministerioSanidad"
         self.__private_key_file_name = self.__id_centro + "_private_key.pem"
-        self.__public_key_file_name = self.__id_centro + "_public_key.pem"
         self.__cert_file_name = self.__id_centro + "_cert.pem"
 
     @property
@@ -77,11 +76,6 @@ class GestorCentroSalud:
         return self.__private_key_file_name
 
     @property
-    def public_key_file_name(self):
-        """Read-only property que devuelve el nombre del fichero de la public_key del centro de salud"""
-        return self.__public_key_file_name
-
-    @property
     def cert_file_name(self):
         """Read-only property que devuelve el nombre del fichero del certificado del centro de salud"""
         return self.__cert_file_name
@@ -97,7 +91,7 @@ class GestorCentroSalud:
             # Derivamos una password segura mediante una KDF y la almacenamos
             criptografia.guardar_password(id_paciente, password)
             # Generamos una pareja de claves con RSA para el paciente
-            criptografia.generar_claves_RSA(paciente.private_key_file_name, paciente.public_key_file_name)
+            criptografia.generar_claves_RSA(paciente.private_key_file_name)
             # Crear una Solicitud de Firma de Certificado (CSR) para el paciente
             csr = criptografia.crear_CSR_paciente(paciente)
             # Solicitamos el certificado del paciente a la Dirección General de Policía (AC3)
@@ -117,7 +111,7 @@ class GestorCentroSalud:
             # Derivamos una password segura mediante una KDF y la almacenamos
             criptografia.guardar_password(id_medico, password)
             # Generamos una pareja de claves con RSA para el médico
-            criptografia.generar_claves_RSA(medico.private_key_file_name, medico.public_key_file_name)
+            criptografia.generar_claves_RSA(medico.private_key_file_name)
             # Crear una Solicitud de Firma de Certificado (CSR) para el médico
             csr = criptografia.crear_CSR_medico(self, medico)
             # Solicitamos el certificado del médico al centro de salud (AC2)

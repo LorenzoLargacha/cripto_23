@@ -28,11 +28,9 @@ class Criptografia:
     KEY_LABEL_USER_KEY =  "_AutenticacionUsuario__key"
 
     PRIVATE_KEY_FILE_NAME_AC1 = "ministerioSanidad_private_key.pem"
-    PUBLIC_KEY_FILE_NAME_AC1 = "ministerioSanidad_public_key.pem"
     CERT_FILE_NAME_AC1 = "ministerioSanidad_cert.pem"
 
     PRIVATE_KEY_FILE_NAME_AC3 = "policia_private_key.pem"
-    PUBLIC_KEY_FILE_NAME_AC3 = "policia_public_key.pem"
     CERT_FILE_NAME_AC3 = "policia_cert.pem"
 
     def __init__(self):
@@ -80,7 +78,7 @@ class Criptografia:
             return False
         return True
 
-    def generar_claves_RSA(self, private_key_file_name: str, public_key_file_name: str):
+    def generar_claves_RSA(self, private_key_file_name: str):
         """Genera un par de claves (pública y privada) para un usuario con el criptosistema asimétrico RSA"""
         # Generamos una pareja de claves con RSA para el usuario
         private_key = rsa.generate_private_key(
@@ -96,15 +94,7 @@ class Criptografia:
         private_key_path = os.path.join(KEY_FILES_PATH, private_key_file_name)
         with open(private_key_path, 'wb') as private_key_file:
             private_key_file.write(private_key_pem)
-        # Serializamos y guardamos la clave pública en un PEM file
-        public_key = private_key.public_key()   # Se deriva la public_key de la private_key
-        public_key_pem = public_key.public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo
-        )
-        public_key_path = os.path.join(KEY_FILES_PATH, public_key_file_name)
-        with open(public_key_path, 'wb') as public_key_file:
-            public_key_file.write(public_key_pem)
+        # La clave pública se obtiene a partir de la clave privada, no es necesario crear un PEM
 
     def obtener_clave_privada(self, private_key_file_name: str):
         """Obtiene la clave privada a partir de un archivo pem"""
@@ -115,15 +105,6 @@ class Criptografia:
                 password=None,
             )
         return private_key
-
-    def obtener_clave_publica(self, public_key_file_name: str):
-        """Obtiene la clave pública a partir de un archivo pem"""
-        public_key_path = os.path.join(KEY_FILES_PATH, public_key_file_name)
-        with open(public_key_path, 'rb') as key_file:
-            public_key = serialization.load_pem_public_key(
-                key_file.read()
-            )
-        return public_key
 
     def encriptar_RSA(self, message: bytes, cert):
         """Encripta un mensaje con el criptosistema asimétrico RSA"""
@@ -180,7 +161,7 @@ class Criptografia:
     def crear_autoridad_raiz(self):
         """Crea las claves y emite el certificado del Ministerio de Sanidad (Autoridad Raíz - AC1)"""
         # Generamos una pareja de claves con RSA para el Ministerio de Sanidad
-        self.generar_claves_RSA(self.PRIVATE_KEY_FILE_NAME_AC1, self.PUBLIC_KEY_FILE_NAME_AC1)
+        self.generar_claves_RSA(self.PRIVATE_KEY_FILE_NAME_AC1)
         private_key_ac1 = self.obtener_clave_privada(self.PRIVATE_KEY_FILE_NAME_AC1)
         public_key_ac1 = private_key_ac1.public_key()
         # Creamos el certificado autofirmado
@@ -198,9 +179,9 @@ class Criptografia:
         return cert
 
     def crear_autoridad_subordinada_centro_salud(self, centro_salud, cert_ac1):
-        """Crea las claves y emitir el certificado del Centro de Salud (Autoridad de Certificación - AC2)"""
+        """Crea las claves y emite el certificado del Centro de Salud (Autoridad de Certificación - AC2)"""
         # Generamos una pareja de claves con RSA para el centro de salud
-        self.generar_claves_RSA(centro_salud.private_key_file_name, centro_salud.public_key_file_name)
+        self.generar_claves_RSA(centro_salud.private_key_file_name)
         private_key = self.obtener_clave_privada(centro_salud.private_key_file_name)
         # Crear una Solicitud de Firma de Certificado (CSR) para el centro de salud
         csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
@@ -217,10 +198,9 @@ class Criptografia:
         return cert
 
     def crear_autoridad_subordinada_policia(self, cert_ac1):
-        """Crea las claves y emitir el certificado de la Dirección General de Policía
-        (Autoridad de Certificación - AC3)"""
+        """Crea las claves y emite el certificado de la Dirección General de Policía (Autoridad Certificación - AC3)"""
         # Generamos una pareja de claves con RSA para la Policía
-        self.generar_claves_RSA(self.PRIVATE_KEY_FILE_NAME_AC3, self.PUBLIC_KEY_FILE_NAME_AC3)
+        self.generar_claves_RSA(self.PRIVATE_KEY_FILE_NAME_AC3)
         private_key = self.obtener_clave_privada(self.PRIVATE_KEY_FILE_NAME_AC3)
         # Crear una Solicitud de Firma de Certificado (CSR) para la Policía
         csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
@@ -265,7 +245,7 @@ class Criptografia:
         return cert
 
     def validar_certificado(self, cert_usuario, cert_acs, cert_acr):
-        """Validar """
+        """Validar certificado utilizando la cadena de certificación"""
         public_key_acs = cert_acs.public_key()
         # Validar la firma del certificado del usuario con la clave pública de la Autoridad de Certificación Subordinada
         try:

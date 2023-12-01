@@ -5,10 +5,9 @@
     "_RegistroMedico__telefono": "+34333444666",
     "_RegistroMedico__edad": "42",
     "_RegistroMedico__especialidad": "Pediatria",
-    "_RegistroMedico__time_stamp": 1701381854.311359,
+    "_RegistroMedico__time_stamp": 1701395974.12428,
     "_RegistroMedico__mis_citas": [],
     "_RegistroMedico__private_key_file_name": "84202258V_private_key.pem",
-    "_RegistroMedico__public_key_file_name": "84202258V_public_key.pem",
     "_RegistroMedico__cert_file_name": "84202258V_cert.pem"
   },
   {
@@ -17,10 +16,9 @@
     "_RegistroMedico__telefono": "+34555444222",
     "_RegistroMedico__edad": "36",
     "_RegistroMedico__especialidad": "Odontologia",
-    "_RegistroMedico__time_stamp": 1701381854.81509,
+    "_RegistroMedico__time_stamp": 1701395974.579458,
     "_RegistroMedico__mis_citas": [],
     "_RegistroMedico__private_key_file_name": "92213124Y_private_key.pem",
-    "_RegistroMedico__public_key_file_name": "92213124Y_public_key.pem",
     "_RegistroMedico__cert_file_name": "92213124Y_cert.pem"
   },
   {
@@ -29,10 +27,9 @@
     "_RegistroMedico__telefono": "+34888444111",
     "_RegistroMedico__edad": "38",
     "_RegistroMedico__especialidad": "Matrona",
-    "_RegistroMedico__time_stamp": 1701381855.290966,
+    "_RegistroMedico__time_stamp": 1701395975.016845,
     "_RegistroMedico__mis_citas": [],
     "_RegistroMedico__private_key_file_name": "67720890N_private_key.pem",
-    "_RegistroMedico__public_key_file_name": "67720890N_public_key.pem",
     "_RegistroMedico__cert_file_name": "67720890N_cert.pem"
   },
   {
@@ -41,17 +38,16 @@
     "_RegistroMedico__telefono": "+34222444777",
     "_RegistroMedico__edad": "51",
     "_RegistroMedico__especialidad": "Atencion Primaria",
-    "_RegistroMedico__time_stamp": 1701381853.858299,
+    "_RegistroMedico__time_stamp": 1701395973.602314,
     "_RegistroMedico__mis_citas": [
       {
-        "_CitaMedica__identificador_cita": "b399586eab3f7cc6d7e8a663d411665444cf7b28827a0256a4cd4496e19611dd",
+        "_CitaMedica__identificador_cita": "fe3fb224d729315f6d01a88c96803e82667dc313d1d11df8426e05e11b64bd3f",
         "_CitaMedica__fecha_hora": "2024-02-21 14:30:00",
         "_CitaMedica__id_paciente": "54026189V",
         "_CitaMedica__motivo_consulta": "Dolor de cabeza"
       }
     ],
     "_RegistroMedico__private_key_file_name": "76281872A_private_key.pem",
-    "_RegistroMedico__public_key_file_name": "76281872A_public_key.pem",
     "_RegistroMedico__cert_file_name": "76281872A_cert.pem"
   }
 ]
